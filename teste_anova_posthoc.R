@@ -1,27 +1,22 @@
 #Carregar as bibliotecas necessárias
 library(tidyverse)
-#Tabela Nanosight sem outliers com as infos das amostras
-nanosightsampleinformation_tudo <- inner_join(nanosight_sem_outliers, sample_information, by = "id_sample") #3 amostras outliers
-anti_join(nanosight_sem_outliers, nanosightsampleinformation_tudo, by = "id_sample") #6 amostras excluídas sem correspondência na tabela geral da Jess
 #Teste ANOVA e post hoc de Tukey (diferença estatística entre os grupos?)
-teste_anova_mean <- aov(tamanho_mean_average ~ Trajetoria, data = nanosightsampleinformation_tudo)
+teste_anova_mean <- aov(tamanho_mean_average ~ Trajetoria, data = nanosight_sem_outliers)
 summary(teste_anova_mean) ##SEM DIFERENÇA ENTRE OS GRUPOS A/B/C/D PARA A MÉDIA
-w1 <- nanosightsampleinformation_tudo[nanosightsampleinformation_tudo$wave == "w1",]
+w1 <- nanosight_sem_outliers[nanosight_sem_outliers$wave == "w1",]
 teste_anova_mean_w1 <- aov(tamanho_mean_average ~ Trajetoria, data = w1)
-summary(teste_anova_mean_w1) ##HÁ DIFERENÇA QUANDO CONTAMOS APENAS W1
-teste_tukey_mean_w1 <- TukeyHSD(teste_anova_mean_w1)
-print(teste_tukey_mean_w1) ###DIFERENÇA C-B
-w2 <- nanosightsampleinformation_tudo[nanosightsampleinformation_tudo$wave == "w2",]
+summary(teste_anova_mean_w1) ##SEM DIFERENÇA PARA W1
+w2 <- nanosight_sem_outliers[nanosight_sem_outliers$wave == "w2",]
 teste_anova_mean_w2 <- aov(tamanho_mean_average ~ Trajetoria, data = w2)
-summary(teste_anova_mean_w2) ##SEM DIFERENÇA QUANDO CONTAMOS APENAS W2
-teste_anova_mode <- aov(tamanho_mode_average ~ Trajetoria, data = nanosightsampleinformation_tudo)
+summary(teste_anova_mean_w2) ##SEM DIFERENÇA PARA W2
+teste_anova_mode <- aov(tamanho_mode_average ~ Trajetoria, data = nanosight_sem_outliers)
 summary(teste_anova_mode) ##HÁ DIFERENÇA ENTRE OS GRUPOS A/B/C/D PARA A MODA
 teste_tukey_mode <- TukeyHSD(teste_anova_mode)
-print(teste_tukey_mode) ###DIFERENÇA D-B
+print(teste_tukey_mode) ###DIFERENÇA D-A / D-B* / D-C
 teste_anova_mode_w1 <- aov(tamanho_mode_average ~ Trajetoria, data = w1)
 summary(teste_anova_mode_w1) ##HÁ DIFERENÇA QUANDO CONTAMOS APENAS W1
 teste_tukey_mode_w1 <- TukeyHSD(teste_anova_mode_w1)
-print(teste_tukey_mode_w1) ##DIFERENÇA D-B
+print(teste_tukey_mode_w1) ##DIFERENÇA D-A / D-B
 teste_anova_mode_w2 <- aov(tamanho_mode_average ~ Trajetoria, data = w2)
 summary(teste_anova_mode_w2) ##SEM DIFERENÇA QUANDO CONTAMOS APENAS W2
 
