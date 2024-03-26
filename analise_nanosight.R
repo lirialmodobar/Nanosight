@@ -67,6 +67,10 @@ sem_correspondencia <- anti_join(nanosight_sem_duplicatas, sample_information, b
 write.csv(nanosight_plus_sampleinfo, "nanosight_plus_sampleinfo_all.csv", row.names = FALSE)
 ##Amostras sem análise no Nanosight
 sample_info_sem_nanosight <- anti_join(sample_information, nanosight_sem_duplicatas, by="id_sample")
+##Acrescentando coluna com e sem Transtorno Psiquiátrico (TP)
+nanosight_plus_sampleinfo <- mutate(nanosight_plus_sampleinfo, 
+                                    TP = ifelse(Grupo %in% c("A_w1", "B_w1", "A_w2", "C_w2"), "sem TP",
+                                                ifelse(Grupo %in% c("C_w1", "D_w1", "B_w2", "D_w2"), "com TP", NA)))
 
 #Contagem dos dados
 ##Número de amostras dos grupos e waves
@@ -123,16 +127,22 @@ modelo_anova2 <- summary(aov(tamanho_mean_average ~ Grupo, data = nanosight_plus
 modelo_anova3 <- aov(EV_pequenas_porcentagem ~ Trajetoria, data = nanosight_plus_sampleinfo) #p=5,79e-0,5 (DEU)
 summary_modelo_anova3 <- summary(modelo_anova3)
 modelo_anova4 <- summary(aov(EV_pequenas_porcentagem ~ wave, data = nanosight_plus_sampleinfo)) #NÃO DEU
+modelo_anova11 <- aov(tamanho_mean_average ~ TP, data = nanosight_plus_sampleinfo) #p=0,05714 (não deu)
+summary_modelo_anova11 <- summary(modelo_anova11)
+modelo_anova12 <- aov(EV_pequenas_porcentagem ~ TP, data = nanosight_plus_sampleinfo) #não deu
+summary_modelo_anova12 <- summary(modelo_anova12)
 ##Testando as premissas da ANOVA
 ###Homogeneidade das amostras
 ####Teste de Levene
 library("car")
 leveneTest(tamanho_mean_average ~ Trajetoria, data = nanosight_plus_sampleinfo) # >0.05, homogêneo
 leveneTest(EV_pequenas_porcentagem ~ Trajetoria, data = nanosight_plus_sampleinfo) # < 0,05, não homogêneo
+leveneTest(tamanho_mean_average ~ TP, data = nanosight_plus_sampleinfo) # quase igual a 0,05, não deu
 ###Normalidade dos resíduos
 ####Teste de Shapiro
 shapiro.test(resid(modelo_anova)) # < 0,05 difere da normalidade
 shapiro.test(resid(modelo_anova3)) # < 0,05 difere da normalidade
+shapiro.test(resid(modelo_anova11)) # < 0,05 difere da normalidade
 ####QQPlot para visualizar a distribuição das amostras em relação a uma distribuição normal
 dados_mean <- rnorm(nanosight_plus_sampleinfo$tamanho_mean_average)
 pdf("qqplot_mean.pdf")
@@ -144,7 +154,6 @@ pdf("qqplot_EV_pequenas_porcentagem.pdf")
 qqnorm(dados_EV_pequenas_porcentagem)
 qqline(dados_EV_pequenas_porcentagem, col = "red")
 dev.off()
-
 #Comparação das médias par-a-par
 ##Teste de Tukey
 tukey_test3 <- TukeyHSD(modelo_anova3) #significativo para B-A e D-B
