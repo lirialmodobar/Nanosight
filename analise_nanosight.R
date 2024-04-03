@@ -75,122 +75,145 @@ nanosight_plus_sampleinfo <- mutate(nanosight_plus_sampleinfo,
 nanosight_plus_sampleinfo <- mutate(nanosight_plus_sampleinfo,
                                     TP_longitudinal = ifelse(Trajetoria %in% c("A"), "caso",
                                                              ifelse(Trajetoria %in% c("B", "C", "D"), "controle", NA)))
+#Para analise de Levene as colunas de transtornos não podem ser numeros, portanto (F=False T=True)
+nanosight_plus_sampleinfo <- nanosight_plus_sampleinfo %>%
+  mutate(
+    dcany = ifelse(dcany == 0, "F", "T"),
+    dcmadep = ifelse(dcmadep == 0, "F", "T"),
+    dcanyanx = ifelse(dcanyanx == 0, "F", "T"),
+    dcgena = ifelse(dcgena == 0, "F", "T"),
+    dcanyhk = ifelse(dcanyhk == 0, "F", "T"),
+    dcpsych = ifelse(dcpsych == 0, "F", "T"),
+    dcmania = ifelse(dcmania == 0, "F", "T"),
+    dcptsd = ifelse(dcptsd == 0, "F", "T")
+  )
 ##Retirando duas linhas da tabela (pq no boxplot de média de tamanho elas ficaram muito fora)
-nanosight_plus_sampleinfo <- nanosight_plus_sampleinfo[-c(133,170), ]
+nanosight_plus_sampleinfo_sem_outliers <- nanosight_plus_sampleinfo[-c(133,170), ]
 ##Tabela só com w1 e só w2
 nanosight_w1 <- subset(nanosight_plus_sampleinfo, wave == "w1")
 nanosight_w2 <- subset(nanosight_plus_sampleinfo, wave == "w2")
+nanosight_w1_sem_outliers <- subset(nanosight_plus_sampleinfo_sem_outliers, wave == "w1")
+nanosight_w2_sem_outliers <- subset(nanosight_plus_sampleinfo_sem_outliers, wave == "w2")
+##Amostras sem pares
+linhas_sem_pares <- !duplicated(nanosight_plus_sampleinfo$subjectid) & !duplicated(nanosight_plus_sampleinfo$subjectid, fromLast = TRUE)
+nanosight_sem_pares <- nanosight_plus_sampleinfo[linhas_sem_pares, ] #perde 7
+linhas_sem_pares_sem_outliers <- !duplicated(nanosight_plus_sampleinfo_sem_outliers$subjectid) & !duplicated(nanosight_plus_sampleinfo_sem_outliers$subjectid, fromLast = TRUE)
+nanosight_sem_pares_sem_outliers <- nanosight_plus_sampleinfo_sem_outliers[linhas_sem_pares_sem_outliers, ] #perde 9 (os 2 pares dos 2 outliers)
 
 #Contagem dos dados
 ##Número de amostras dos grupos e waves
-library(stringr)
-numero_amostras_grupos <- nanosight_plus_sampleinfo %>%
-  group_by(Trajetoria) %>%
-  summarize(Amostras = n(),)
-numero_amostras_grupos_w1 <- nanosight_plus_sampleinfo %>%
-  filter(Trajetoria %in% c("A", "B", "C", "D") & str_detect(wave, "w1")) %>%
-  group_by(Trajetoria) %>%
-  summarise(w1 = n())
-numero_amostras_grupos_w2 <- nanosight_plus_sampleinfo %>%
-  filter(Trajetoria %in% c("A", "B", "C", "D") & str_detect(wave, "w2")) %>%
-  group_by(Trajetoria) %>%
-  summarise(w2 = n())
-numero_amostras_grupos_waves <- numero_amostras_grupos %>%
-  inner_join(numero_amostras_grupos_w1, by = "Trajetoria") %>%
-  inner_join(numero_amostras_grupos_w2, by = "Trajetoria")
-write.csv(numero_amostras_grupos_waves, "amostras_grupos_waves.csv", row.names = FALSE)
-##Amostras sem pares
-linhas_sem_pares <- !duplicated(nanosight_plus_sampleinfo$subjectid) & !duplicated(nanosight_plus_sampleinfo$subjectid, fromLast = TRUE)
-nanosight_sem_pares <- nanosight_plus_sampleinfo[linhas_sem_pares, ]
+tabela_contagem_trajetoria_wave <- table(nanosight_plus_sampleinfo$Trajetoria, nanosight_plus_sampleinfo$wave)
+tabela_contagem_trajetoria_wave_sem_outliers <- table(nanosight_plus_sampleinfo_sem_outliers$Trajetoria, nanosight_plus_sampleinfo_sem_outliers$wave)
 
 #Análise de Variância
-##ANOVA para média e trajetória, considerando todos, só w1, e só w2
-modelo_anova_media_trajetoria <- aov(tamanho_mean_average ~ Trajetoria, data = nanosight_plus_sampleinfo)
-summary_modelo_anova_media_trajetoria <- summary(modelo_anova_media_trajetoria) #DEU (antes de tirar os outliers não tinha dado, p=0,0571)
-modelo_anova_media_trajetoria_w1 <- aov(tamanho_mean_average ~ Trajetoria, data = nanosight_w1)
-summary_modelo_anova_media_trajetoria_w1 <- summary(modelo_anova_media_trajetoria_w1) #DEU
-modelo_anova_media_trajetoria_w2 <- aov(tamanho_mean_average ~ Trajetoria, data = nanosight_w2)
-summary_modelo_anova_media_trajetoria_w2 <- summary(modelo_anova_media_trajetoria_w2) #NÃO DEU p=0,3
-##ANOVA para média e presença ou não de TP, considerando todos, w1 e w2
-modelo_anova_media_TP <- aov(tamanho_mean_average ~ TP_longitudinal, data = nanosight_plus_sampleinfo)
-summary_modelo_anova_media_TP <- summary(modelo_anova_media_TP) #Análise longitudinal NÃO DEU
-modelo_anova_media_w1_TP <- aov(tamanho_mean_average ~ TP_transversal, data = nanosight_w1) 
-summary_modelo_anova_media_w1_TP <- summary(modelo_anova_media_w1_TP) #Análise transversal w1 (NÃO DEU, CONTINUA NÃO DANDO)
-modelo_anova_media_w2_TP <- aov(tamanho_mean_average ~ TP_transversal, data = nanosight_w2) 
-summary_modelo_anova_media_w2_TP <- summary(modelo_anova_media_w2_TP) #Análise transversal w2 (NÃO DEU, CONTINUA NÃO DANDO)
-modelo_anova_media_grupos <- aov(tamanho_mean_average ~ Grupo, data = nanosight_plus_sampleinfo)
-summary_modelo_anova_media_grupos <- summary(modelo_anova_media_grupos) #Trajetoria_wave (eu)* (P=0,09 NÃO DEU / AGORA DEU)
-##ANOVA para porcentagem de EVs pequenas e trajetoria, considerando todos, w1 e w2
-modelo_anova_porcentagem_trajetoria <- aov(EV_pequenas_porcentagem ~ Trajetoria, data = nanosight_plus_sampleinfo) 
-summary_modelo_anova_porcentagem_trajetoria <- summary(modelo_anova_porcentagem_trajetoria) #DEU
-modelo_anova_porcentagem_trajetoria_w1 <- aov(EV_pequenas_porcentagem ~ Trajetoria, data = nanosight_w1)
-summary_modelo_anova_porcentagem_trajetoria_w1 <- summary(modelo_anova_porcentagem_trajetoria_w1) #DEU
-modelo_anova_porcentagem_trajetoria_w2 <- aov(EV_pequenas_porcentagem ~ Trajetoria, data = nanosight_w2)
-summary_modelo_anova_porcentagem_trajetoria_w2 <- summary(modelo_anova_porcentagem_trajetoria_w2) #DEU
-##ANOVA para porcentagem de EVs pequenas e TP
-modelo_anova_porcentagem_tp_longitudinal <- aov(EV_pequenas_porcentagem ~ TP_longitudinal, data = nanosight_plus_sampleinfo)
-summary_modelo_anova_porcentagem_tp_longitudinal <- summary(modelo_anova_porcentagem_tp_longitudinal) #NAO DEU
-modelo_anova_porcentagem_tp_transversal_w1 <- aov(EV_pequenas_porcentagem ~ TP_transversal, data = nanosight_w1)
-summary_modelo_anova_porcentagem_tp_transversal_w1 <- summary(modelo_anova_porcentagem_tp_transversal_w1) #NAO DEU
-modelo_anova_porcentagem_tp_transversal_w2 <- aov(EV_pequenas_porcentagem ~ TP_transversal, data = nanosight_plus_sampleinfo)
-summary_modelo_anova_porcentagem_tp_transversal_w2 <- summary(modelo_anova_porcentagem_tp_transversal_w2) #NAO DEU
-##ANOVA para media e sexo
-modelo_anova_media_sexo <- aov(tamanho_mean_average ~ sex, data = nanosight_plus_sampleinfo)
-summary_modelo_anova_media_sexo <- summary(modelo_anova_media_sexo) #NAO DEU
-##ANOVA para media e estado
-modelo_anova_media_site <- aov(tamanho_mean_average ~ site, data = nanosight_plus_sampleinfo)
-summary_modelo_anova_media_site <- summary(modelo_anova_media_site) #NÃO DEU
-##ANOVA para media e TPs
-###dcany
-modelo_anova_media_dcany <- aov(tamanho_mean_average ~ dcany, data = nanosight_plus_sampleinfo)
-summary_modelo_anova_media_dcany <- summary(modelo_anova_media_dcany) #NÃO DEU
-###dcmadep
-modelo_anova_media_dcmadep <- aov(tamanho_mean_average ~ dcmadep, data = nanosight_plus_sampleinfo)
-summary_modelo_anova_media_dcmadep <- summary(modelo_anova_media_dcmadep) #NÃO DEU
-###dcanyanx
-modelo_anova_media_dcanyanx <- aov(tamanho_mean_average ~ dcanyanx, data = nanosight_plus_sampleinfo)
-summary_modelo_anova_media_dcanyanx <- summary(modelo_anova_media_dcanyanx) #NÃO DEU
-###dcgena
-modelo_anova_media_dcgena <- aov(tamanho_mean_average ~ dcgena, data = nanosight_plus_sampleinfo)
-summary_modelo_anova_media_dcgena <- summary(modelo_anova_media_dcgena) #NÃO DEU
-###dcanyhk
-modelo_anova_media_dcanyhk <- aov(tamanho_mean_average ~ dcanyhk, data = nanosight_plus_sampleinfo)
-summary_modelo_anova_media_dcanyhk <- summary(modelo_anova_media_dcanyhk) #NÃO DEU
-###dcpsych
-modelo_anova_media_dcpsych <- aov(tamanho_mean_average ~ dcpsych, data = nanosight_plus_sampleinfo)
-summary_modelo_anova_media_dcpsych <- summary(modelo_anova_media_dcpsych) #NÃO DEU
-###dcmania
-modelo_anova_media_dcmania <- aov(tamanho_mean_average ~ dcmania, data = nanosight_plus_sampleinfo)
-summary_modelo_anova_media_dcmania <- summary(modelo_anova_media_dcmania) #NÃO DEU
-###dcptsd
-modelo_anova_media_dcptsd <- aov(tamanho_mean_average ~ dcptsd, data = nanosight_plus_sampleinfo)
-summary_modelo_anova_media_dcptsd <- summary(modelo_anova_media_dcptsd) #DEU (p=0,04) -> NÃO DEU PÕS AJUSTE DE WHITE
-###concentracao_real
-modelo_anova_concentracao_trajetoria <- aov(concentracao_real ~ Trajetoria, data = nanosight_plus_sampleinfo)
-summary_modelo_anova_concentracao_trajetoria <- summary(modelo_anova_concentracao_trajetoria)
-##Testando as premissas da ANOVA
-###Homogeneidade das amostras
-####Teste de Levene
-library("car")
-leveneTest(tamanho_mean_average ~ Trajetoria, data = nanosight_plus_sampleinfo) #não homogêneo p=0,01 (antes da retirada, era homogêneo p>0,05)
-leveneTest(tamanho_mean_average ~ Trajetoria, data = nanosight_w1) #não homogêneo, p=0,002
-leveneTest(tamanho_mean_average ~ Grupo, data = nanosight_plus_sampleinfo) #não homogêneo, p<0,05
-leveneTest(EV_pequenas_porcentagem ~ Trajetoria, data = nanosight_plus_sampleinfo) #não homogêneo, p < 0,05 
-leveneTest(EV_pequenas_porcentagem ~ Trajetoria, data = nanosight_w1) #não homogêneo, p<0,05
-leveneTest(EV_pequenas_porcentagem ~ Trajetoria, data = nanosight_w2) #não homogêneo, p<0,05
-leveneTest(EV_pequenas_porcentagem ~ TP_longitudinal, data = nanosight_plus_sampleinfo) #homogêneo p > 0,05
-leveneTest(concentracao_real ~ Trajetoria, data = nanosight_plus_sampleinfo) #não homogeneo, p<0,05
-###Normalidade dos resíduos
-####Teste de Shapiro
-shapiro.test(resid(modelo_anova_media_trajetoria)) # < 0,05 difere da normalidade
-shapiro.test(resid(modelo_anova_media_trajetoria_w1)) # dentro da normalidade, p=0,5645
-shapiro.test(resid(modelo_anova_media_grupos)) # > 0,05, dentro da normalidade
-shapiro.test(resid(modelo_anova_porcentagem_trajetoria)) # difere da normalidade, p < 0,05
-shapiro.test(resid(modelo_anova_porcentagem_trajetoria_w1)) #difere da normalidade p < 0,05
-shapiro.test(resid(modelo_anova_porcentagem_trajetoria_w2)) #difere da normalidade p < 0,05
-shapiro.test(resid(modelo_anova_porcentagem_tp_longitudinal)) # difere da normalidade p <<<< 0,5
-shapiro.test(resid(modelo_anova_concentracao_trajetoria)) #difere da normalidade p <<<<<<<<<<< 0,5
-####QQPlot para visualizar a distribuição das amostras em relação a uma distribuição normal
+##lista de formulas para todas as amostras
+formulas <- list(
+  tamanho_mean_average ~ Trajetoria,
+  tamanho_mean_average ~ TP_longitudinal,
+  tamanho_mean_average ~ Grupo, 
+  tamanho_mean_average ~ site, 
+  tamanho_mean_average ~ dcany, 
+  tamanho_mean_average ~ dcmadep,
+  tamanho_mean_average ~ dcanyanx, 
+  tamanho_mean_average ~ dcgena, 
+  tamanho_mean_average ~ dcanyhk,
+  tamanho_mean_average ~ dcpsych, 
+  tamanho_mean_average ~ dcptsd, 
+  EV_pequenas_porcentagem ~ Trajetoria, 
+  EV_pequenas_porcentagem ~ TP_longitudinal, 
+  concentracao_real ~ Trajetoria
+)
+##nomeando as formulas
+apelidos <- c(
+  "tamanho_trajetoria",
+  "tamanho_tp_longitudinal",
+  "tamanho_grupo",
+  "tamanho_estado",
+  "tamanho_dcany",
+  "tamanho_dcmadep",
+  "tamanho_dcanyanx",
+  "tamanho_dcgena",
+  "tamanho_dcanyhk",
+  "tamanho_dcpsych",
+  "tamanho_pctsd",
+  "porcentagem_trajetoria",
+  "porcentagem_tp_longitudinal",
+  "concentracao_trajetoria"
+)
+##atribuindo os apelidos às fórmulas
+names(formulas) <- apelidos
+##Função para criar modelo ANOVA e gerar resumo
+criar_anova <- function(formula, dataset, apelidos) {
+  modelo <- aov(formula, data = dataset)
+  resumo <- summary(modelo)
+  assign(paste("summary_modelo_anova_", apelidos, sep = ""), resumo, envir = .GlobalEnv)
+  return(resumo)
+}
+##loop para criar os modelos e resumos para todas as amostras e para a exclusão dos outliers
+p_values <- c()
+p_values_sem_outliers <- c()
+for(i in seq_along(formulas)) {
+  #para a tabela com outliers
+  resumo <- criar_anova(formulas[[i]], nanosight_plus_sampleinfo, apelidos[i])
+  p_value <- resumo[[1]]$`Pr(>F)`[1]
+  p_values <- c(p_values, p_value)
+  #para a tabela sem outliers
+  resumo_sem_outliers <- criar_anova(formulas[[i]], nanosight_plus_sampleinfo_sem_outliers, apelidos[i])
+  p_value_sem_outliers <- resumo_sem_outliers[[1]]$`Pr(>F)`[1]
+  p_values_sem_outliers <- c(p_values_sem_outliers, p_value_sem_outliers)
+}
+## Criar a tabela combinada com os resultados de ambas as análises
+tabela_p_values_anova <- data.frame(Apelido = apelidos, P_Valor = p_values, P_Valor_Sem_Outliers = p_values_sem_outliers)
+##lista de formulas para w1 e w2 + apelidos
+formulas_waves <- list(
+  tamanho_mean_average ~ Trajetoria,
+  tamanho_mean_average ~ TP_transversal, 
+  EV_pequenas_porcentagem ~ Trajetoria, 
+  EV_pequenas_porcentagem ~ TP_transversal
+)
+apelidos_waves <- c(
+  "tamanho_trajetoria",
+  "tamanho_tp_transversal",
+  "porcentagem_trajetoria",
+  "porcentagem_tp_transversal"
+)
+names(formulas_waves) <- apelidos_waves
+##função para criar modelo ANOVA e gerar resumo para waves
+criar_anova_waves <- function(formula, dataset, apelidos_waves) {
+  modelo_waves <- aov(formula, data = dataset)
+  resumo_waves <- summary(modelo_waves)
+  assign(paste("summary_modelo_anova_waves", apelidos_waves, sep = ""), resumo_waves, envir = .GlobalEnv)
+  return(resumo_waves)
+}
+##loop para criar os modelos e resumos para todas as amostras e para a exclusão dos outliers
+p_values_w1 <- c()
+p_values_w2 <- c()
+p_values_w1_sem_outliers <- c()
+p_values_w2_sem_outliers <- c()
+for(i in seq_along(formulas_waves)) {
+  #para a tabela w1
+  resumo_w1 <- criar_anova_waves(formulas_waves[[i]], nanosight_w1, apelidos_waves[i])
+  p_value_w1 <- resumo_w1[[1]]$`Pr(>F)`[1]
+  p_values_w1 <- c(p_values_w1, p_value_w1)
+  #para a tabela w2
+  resumo_w2 <- criar_anova_waves(formulas_waves[[i]], nanosight_w2, apelidos_waves[i])
+  p_value_w2 <- resumo_w2[[1]]$`Pr(>F)`[1]
+  p_values_w2 <- c(p_values_w2, p_value_w2)
+  #para a tabela w1 sem outliers
+  resumo_w1_sem_outliers <- criar_anova_waves(formulas_waves[[i]], nanosight_w1_sem_outliers, apelidos_waves[i])
+  p_value_w1_sem_outliers <- resumo_w1_sem_outliers[[1]]$`Pr(>F)`[1]
+  p_values_w1_sem_outliers <- c(p_values_w1_sem_outliers, p_value_w1_sem_outliers)
+  #para a tabela w2 sem outliers
+  resumo_w2_sem_outliers <- criar_anova_waves(formulas_waves[[i]], nanosight_w2_sem_outliers, apelidos_waves[i])
+  p_value_w2_sem_outliers <- resumo_w2_sem_outliers[[1]]$`Pr(>F)`[1]
+  p_values_w2_sem_outliers <- c(p_values_w2_sem_outliers, p_value_w2_sem_outliers)
+}
+## Criar a tabela combinada com os resultados de w1/w2 e w1/w2 sem outliers
+tabela_p_values_anova_waves <- data.frame(Apelido = apelidos_waves, P_Valor_w1 = p_values_w1, P_Valor_w2 = p_values_w2, P_Valor_w1_sem_outliers = p_values_w1_sem_outliers, P_Valor_w2_sem_outliers = p_values_w2_sem_outliers)
+
+#Premissas da ANOVA
+##Normalidade (Shapiro não sera considerado porque a curva mostrou distribuição normal)
+###QQPlot para visualizar a distribuição das amostras em relação a uma distribuição normal
 dados_mean <- rnorm(nanosight_plus_sampleinfo$tamanho_mean_average)
 pdf("qqplot_mean.pdf")
 qqnorm(dados_mean)
@@ -201,60 +224,113 @@ pdf("qqplot_EV_pequenas_porcentagem.pdf")
 qqnorm(dados_EV_pequenas_porcentagem)
 qqline(dados_EV_pequenas_porcentagem, col = "red")
 dev.off()
-#Comparação das médias par-a-par
-##Teste de Tukey
-tukey_test_media_trajetoria <- TukeyHSD(modelo_anova_media_trajetoria) #significativo para B-A e D-B
-tukey_test_media_trajetoria_w1 <- TukeyHSD(modelo_anova_media_trajetoria_w1) #significativo para B-A
-tukey_test_media_grupos <- TukeyHSD(modelo_anova_media_grupos) #significativo para A_w1 e B_w1
-tukey_test_porcentagem_trajetoria <- TukeyHSD(modelo_anova_porcentagem_trajetoria) #significativo para B-A, C-B, D-B (B em relação a todos)
-tukey_test_porcentagem_trajetoria_w1 <- TukeyHSD(modelo_anova_porcentagem_trajetoria_w1) #significativo para B-A e D-B
-tukey_test_porcentagem_trajetoria_w2 <- TukeyHSD(modelo_anova_porcentagem_trajetoria_w2) #significativo para D-B
-tukey_test_porcentagem_tp_longitudinal <- TukeyHSD(modelo_anova_porcentagem_tp_longitudinal) #significativo para controle-caso
-tukey_test_concentracao_trajetoria <- TukeyHSD(modelo_anova_concentracao_trajetoria) #significativo para B-A, C-B, D-B (B em relação a todos)
-##Teste LSD = mesmos resultados do tukey em todos
-library(lsmeans)
-lsd_mean_media_trajetoria <- lsmeans(modelo_anova_media_trajetoria, specs = "Trajetoria")
-lsd_mean_result_media_trajetoria <- summary(pairs(lsd_mean_media_trajetoria)) #A-B e B-D
-lsd_mean_media_trajetoria_w1 <- lsmeans(modelo_anova_media_trajetoria_w1, specs = "Trajetoria")
-lsd_mean_result_media_trajetoria_w1 <- summary(pairs(lsd_mean_media_trajetoria_w1)) #A-B
-lsd_mean_media_grupos <- lsmeans(modelo_anova_media_grupos, specs = "Grupo")
-lsd_mean_result_media_grupos <- summary(pairs(lsd_mean_media_grupos)) #A_w1 e B_w1
-lsd_mean_porcentagem_trajetoria <- lsmeans(modelo_anova_porcentagem_trajetoria, specs = "Trajetoria")
-lsd_mean_result_porcentagem_trajetoria <- summary(pairs(lsd_mean_porcentagem_trajetoria)) #A-B, B-C, B-D
-lsd_mean_porcentagem_trajetoria_w1 <- lsmeans(modelo_anova_porcentagem_trajetoria_w1, specs = "Trajetoria")
-lsd_mean_result_porcentagem_trajetoria_w1 <- summary(pairs(lsd_mean_porcentagem_trajetoria_w1)) #A-B, B-D
-lsd_mean_porcentagem_trajetoria_w2 <- lsmeans(modelo_anova_porcentagem_trajetoria_w2, specs = "Trajetoria")
-lsd_mean_result_porcentagem_trajetoria_w2 <- summary(pairs(lsd_mean_porcentagem_trajetoria_w2)) #B-D
-lsd_mean_porcentagem_tp_longitudinal <- lsmeans(modelo_anova_porcentagem_tp_longitudinal, specs = "TP_longitudinal")
-lsd_mean_result_porcentagem_tp_longitudinal <- summary(pairs(lsd_mean_porcentagem_tp_longitudinal)) #caso-controle
-##Tamanho do efeito
-library("lsr")
-etaSquared(modelo_anova_media_trajetoria)
-plot(TukeyHSD(modelo_anova_media_trajetoria), las = 1)
-etaSquared(modelo_anova_concentracao_trajetoria)
-plot(TukeyHSD(modelo_anova_concentracao_trajetoria), las = 1)
-##Correção para valores heterocedásticos (ajuste de White)
+##Homogeneidade (Teste de Levene)
 library("car")
-modelo <- lm(tamanho_mean_average ~ Trajetoria, data = nanosight_plus_sampleinfo)
-Anova(modelo, Type="II", white.adjust=TRUE) #DEU
-modelo2 <- lm(tamanho_mean_average ~ Trajetoria, data = nanosight_w2)
-Anova(modelo2, Type="II", white.adjust=TRUE) #NÃO DEU
-modelo3 <- lm(tamanho_mean_average ~ TP_longitudinal, data = nanosight_plus_sampleinfo)
-Anova(modelo3, Type="II", white.adjust=TRUE) #NÃO DEU
-modelo4 <- lm(tamanho_mean_average ~ TP_transversal, data = nanosight_w1)
-Anova(modelo4, Type="II", white.adjust=TRUE) #NÃO DEU
-modelo5 <- lm(tamanho_mean_average ~ Grupo, data = nanosight_plus_sampleinfo)
-Anova(modelo5, Type="II", white.adjust=TRUE) #DEU
-modelo6 <- lm(EV_pequenas_porcentagem ~ TP_longitudinal, data = nanosight_plus_sampleinfo)
-Anova(modelo6, Type="II", white.adjust=TRUE) #NAO DEU
-modelo7 <- lm(tamanho_mean_average ~ sex, data = nanosight_plus_sampleinfo)
-Anova(modelo7, Type="II", white.adjust=TRUE) #NAO DEU
-modelo8 <- lm(tamanho_mean_average ~ dcany, data = nanosight_plus_sampleinfo)
-Anova(modelo8, Type="II", white.adjust=TRUE) #NÃO DEU
-modelo9 <- lm(tamanho_mean_average ~ dcanyanx, data = nanosight_plus_sampleinfo)
-Anova(modelo9, Type="II", white.adjust=TRUE)
-modelo10 <- lm(tamanho_mean_average ~ dcptsd, data = nanosight_plus_sampleinfo)
-Anova(modelo10, Type="II", white.adjust=TRUE)
+##todas
+levene_results <- c()
+levene_results_sem_outliers <- c()
+for (i in seq_along(formulas)) {
+  #para todas as amostras
+  modelo_levene <- aov(formulas[[i]], data = nanosight_plus_sampleinfo)
+  levene <- leveneTest(modelo_levene)
+  levene_results <- c(levene_results, levene$`Pr(>F)`[1])
+  #para amostras sem outliers
+  modelo_levene_sem_outliers <- aov(formulas[[i]], data = nanosight_plus_sampleinfo_sem_outliers)
+  levene_sem_outliers <- leveneTest(modelo_levene_sem_outliers)
+  levene_results_sem_outliers <- c(levene_results_sem_outliers, levene_sem_outliers$`Pr(>F)`[1])
+}
+tabela_levene <- data.frame(Apelido = apelidos, P_Valor_Levene = levene_results, P_Valor_Levene_sem_outliers = levene_results_sem_outliers)
+##waves
+levene_results_w1 <- c()
+levene_results_w2 <- c()
+levene_results_w1_sem_outliers <- c()
+levene_results_w2_sem_outliers <- c()
+for (i in seq_along(formulas_waves)) {
+  #para w1
+  modelo_levene_w1 <- aov(formulas_waves[[i]], data = nanosight_w1)
+  levene_w1 <- leveneTest(modelo_levene_w1)
+  levene_results_w1 <- c(levene_w1, levene$`Pr(>F)`[1])
+  #para w2
+  modelo_levene_w2 <- aov(formulas_waves[[i]], data = nanosight_w2)
+  levene_w2 <- leveneTest(modelo_levene_w2)
+  levene_results_w2 <- c(levene_w2, levene$`Pr(>F)`[1])
+  #para w1 sem outliers
+  modelo_levene_w1_sem_outliers <- aov(formulas_waves[[i]], data = nanosight_w1_sem_outliers)
+  levene_w1_sem_outliers <- leveneTest(modelo_levene_w1_sem_outliers)
+  levene_results_w1_sem_outliers <- c(levene_w1_sem_outliers, levene$`Pr(>F)`[1])
+  #para w2 sem outliers
+  modelo_levene_w2_sem_outliers <- aov(formulas_waves[[i]], data = nanosight_w2_sem_outliers)
+  levene_w2_sem_outliers <- leveneTest(modelo_levene_w2_sem_outliers)
+  levene_results_w2_sem_outliers <- c(levene_w2_sem_outliers, levene$`Pr(>F)`[1])
+}
+tabela_levene_waves <- data.frame(Apelido = apelidos_waves, P_Valor_Levene_w1 = levene_results_w1, P_Valor_Levene_w2 = levene_results_w2, P_Valor_Levene_w1_sem_outliers = levene_results_w1_sem_outliers, P_Valor_Levene_w2_sem_outliers = levene_results_w2_sem_outliers)
+
+#Anova de Welch (caso não exista homogeneidade de variâncias) #obs tirei o dcmania pq só tinha uma pessoa e dava erro no teste
+##todas
+executar_teste_anova_welch <- function(formula, data) {
+  resultado_teste_anova_welch <- oneway.test(formula, data = data, var.equal = FALSE)
+  return(resultado_teste_anova_welch$p.value)
+}
+p_valores_welch <- numeric(length(formulas))
+p_valores_welch_sem_outliers <- numeric(length(formulas))
+for (i in seq_along(formulas)) {
+  #todas
+  resultado_teste_welch <- oneway.test(formulas[[i]], data = nanosight_plus_sampleinfo, var.equal = FALSE)
+  p_valores_welch[i] <- as.character(resultado_teste_welch$p.value)
+  #sem outliers
+  resultado_teste_welch_sem_outliers <- oneway.test(formulas[[i]], data = nanosight_plus_sampleinfo_sem_outliers, var.equal = FALSE)
+  p_valores_welch_sem_outliers[i] <- as.character(resultado_teste_welch_sem_outliers$p.value)
+}
+tabela_welch <- data.frame(
+  Teste = apelidos,
+  P_Valor = p_valores_welch, P_Valor_sem_outliers = p_valores_welch_sem_outliers
+)
+##waves
+###w1
+p_valores_welch_w1 <- numeric(length(formulas_waves))
+p_valores_welch_w2 <- numeric(length(formulas_waves))
+p_valores_welch_w1_sem_outliers <- numeric(length(formulas_waves))
+p_valores_welch_w2_sem_outliers <- numeric(length(formulas_waves))
+for (i in seq_along(formulas_waves)) {
+  #w1
+  resultado_welch_w1 <- oneway.test(formulas_waves[[i]], data = nanosight_w1, var.equal = FALSE)
+  p_valores_welch_w1[i] <- as.character(resultado_welch_w1$p.value)
+  #w1 sem outliers
+  resultado_welch_w1_sem_outliers <- oneway.test(formulas_waves[[i]], data = nanosight_w1_sem_outliers, var.equal = FALSE)
+  p_valores_welch_w1_sem_outliers[i] <- as.character(resultado_welch_w1_sem_outliers$p.value)
+  #w2
+  resultado_welch_w2 <- oneway.test(formulas_waves[[i]], data = nanosight_w2, var.equal = FALSE)
+  p_valores_welch_w2[i] <- as.character(resultado_welch_w2$p.value)
+  #w2 sem outliers
+  resultado_welch_w2_sem_outliers <- oneway.test(formulas_waves[[i]], data = nanosight_w2_sem_outliers, var.equal = FALSE)
+  p_valores_welch_w2_sem_outliers[i] <- as.character(resultado_welch_w2_sem_outliers$p.value)
+}
+tabela_welch_waves <- data.frame(
+  Teste = apelidos_waves,
+  P_Valor_w1 = p_valores_welch_w1, P_Valor_w1_sem_outliers = p_valores_welch_w1_sem_outliers, P_Valor_w2 = p_valores_welch_w2, P_Valor_w2_sem_outliers = p_valores_welch_w2_sem_outliers
+)
+
+#Comparação das médias
+##Teste de Games-Howell
+library("remotes")
+remotes::install_github("matherion/userfriendlyscience")
+library("userfriendlyscience")
+###com outliers
+oneway(nanosight_plus_sampleinfo$Grupo, y=nanosight_plus_sampleinfo$tamanho_mean_average, posthoc = 'games-howell') #nenhum
+oneway(nanosight_plus_sampleinfo$Trajetoria, y=nanosight_plus_sampleinfo$EV_pequenas_porcentagem, posthoc = 'games-howell') #B-A, C-B, D-B (B tem menor porcentagem de VEs pequenas)
+oneway(nanosight_plus_sampleinfo$Trajetoria, y=nanosight_plus_sampleinfo$concentracao_real, posthoc = 'games-howell') #deu erro
+oneway(nanosight_w1$Trajetoria, y=nanosight_w1$tamanho_mean_average, posthoc = 'games-howell') #B-A e D-B (B tem maior tamanho medio de EVs)
+oneway(nanosight_w1$Trajetoria, y=nanosight_w1$EV_pequenas_porcentagem, posthoc = 'games-howell') #B-A e D-B (B tem menor porcentagem de VEs pequenas)
+oneway(nanosight_w2$Trajetoria, y=nanosight_w2$EV_pequenas_porcentagem, posthoc = 'games-howell') #D-B (B tem menor porcentagem de VEs pequenas)
+###sem outliers
+oneway(nanosight_plus_sampleinfo_sem_outliers$Trajetoria, y = nanosight_plus_sampleinfo_sem_outliers$tamanho_mean_average, posthoc = 'games-howell') #B-A e D-B (B tem tamanho medio de VEs maior)
+oneway(nanosight_plus_sampleinfo_sem_outliers$Grupo, y=nanosight_plus_sampleinfo_sem_outliers$tamanho_mean_average, posthoc = 'games-howell') #nenhum
+oneway(nanosight_w1$Trajetoria, y=nanosight_w1$tamanho_mean_average, posthoc = 'games-howell') #B-A e D-B
+oneway(nanosight_plus_sampleinfo_sem_outliers$Trajetoria, y=nanosight_plus_sampleinfo_sem_outliers$EV_pequenas_porcentagem, posthoc = 'games-howell') #B-A, C-B, D-B (B tem menor porcentagem de VEs pequenas)
+oneway(nanosight_plus_sampleinfo_sem_outliers$Trajetoria, y=nanosight_plus_sampleinfo_sem_outliers$concentracao_real, posthoc = 'games-howell') #deu erro
+oneway(nanosight_w1_sem_outliers$Trajetoria, y=nanosight_w1_sem_outliers$tamanho_mean_average, posthoc = 'games-howell') #B-A e D-B (B tem maior tamanho medio de EVs)
+oneway(nanosight_w1_sem_outliers$Trajetoria, y=nanosight_w1_sem_outliers$EV_pequenas_porcentagem, posthoc = 'games-howell') #B-A e D-B (B tem menor porcentagem de VEs pequenas)
+oneway(nanosight_w2_sem_outliers$Trajetoria, y=nanosight_w2_sem_outliers$EV_pequenas_porcentagem, posthoc = 'games-howell') #B-A, D-B (B tem menor porcentagem de VEs pequenas)
 
 #Analises pareadas
 ##Separando os dados
@@ -274,12 +350,12 @@ nanosight_pares_D_w2 <- subset(nanosight_pares_D, wave == "w2")
 ##Teste T pareado
 t.test(nanosight_pares_A_w1$tamanho_mean_average, nanosight_pares_A_w2$tamanho_mean_average, paired = TRUE) #sem diferença (p=0,05734)
 t.test(nanosight_pares_A_w1$EV_pequenas_porcentagem, nanosight_pares_A_w2$EV_pequenas_porcentagem, paired = TRUE) #sem diferença (p=0,1)
-t.test(nanosight_pares_B_w1$tamanho_mean_average, nanosight_pares_B_w2$tamanho_mean_average, paired = TRUE) #sem diferença (p=0,2)
-t.test(nanosight_pares_B_w1$EV_pequenas_porcentagem, nanosight_pares_B_w2$EV_pequenas_porcentagem, paired = TRUE) #sem diferença (p=0,3)
+t.test(nanosight_pares_B_w1$tamanho_mean_average, nanosight_pares_B_w2$tamanho_mean_average, paired = TRUE) #sem diferença (p=0,4)
+t.test(nanosight_pares_B_w1$EV_pequenas_porcentagem, nanosight_pares_B_w2$EV_pequenas_porcentagem, paired = TRUE) #sem diferença (p=0,7)
 t.test(nanosight_pares_C_w1$tamanho_mean_average, nanosight_pares_C_w2$tamanho_mean_average, paired = TRUE) #sem diferença (p=0,2)
 t.test(nanosight_pares_C_w1$EV_pequenas_porcentagem, nanosight_pares_C_w2$EV_pequenas_porcentagem, paired = TRUE) #sem diferença (p=0,7)
 t.test(nanosight_pares_D_w1$tamanho_mean_average, nanosight_pares_D_w2$tamanho_mean_average, paired = TRUE) #sem diferença (p=0,8)
-t.test(nanosight_pares_D_w1$EV_pequenas_porcentagem, nanosight_pares_D_w2$EV_pequenas_porcentagem, paired = TRUE) #sem diferença (p=0,8)
+t.test(nanosight_pares_D_w1$EV_pequenas_porcentagem, nanosight_pares_D_w2$EV_pequenas_porcentagem, paired = TRUE) #sem diferença (p=0,5)
 
 ######################################
 
