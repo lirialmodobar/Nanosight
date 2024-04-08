@@ -54,8 +54,19 @@ na_indexes_concentration_EV_grandes <- which(is.na(concentration_EV_grandes))
 concentration_EV_grandes_alt <- concentration_EV_grandes_alt[na_indexes_concentration_EV_grandes]
 concentration_EV_grandes[is.na(concentration_EV_grandes)] <- concentration_EV_grandes_alt
 EV_pequenas_porcentagem <- (concentration_EV_pequenas/(concentration_EV_grandes + concentration_EV_pequenas)) * 100
+##Batch Nanosight
+batch_nan <- sapply(importar_exp_sum, index_lapply_sapply, 8, 2)
+batch_nan <- as.data.frame(batch_nan)
+batch_nan <- sapply(strsplit(batch_nan$batch_nan, " "), tail, 1)
+batch_nan <- as.data.frame(batch_nan)
+datas_unicas <- duplicated(batch_nan$batch_nan)
+datas_unicas <- subset(batch_nan, !datas_unicas) #para ver quantos grupos de datas (batch)
+datas_unicas <- datas_unicas[,1]
+numeros_batch <- seq(1, 22)
+replacement <- setNames(numeros_batch, datas_unicas)
+batch_nan$batch_nan <- replacement[batch_nan$batch_nan]
 ##Juntando todos os dados obtidos do nanosight em uma tabela
-tabela_tudo_nanosight <- data.frame(id_sample, concentracao_real, tamanho_mean_average, tamanho_mode_average, EV_pequenas_porcentagem)
+tabela_tudo_nanosight <- data.frame(id_sample, concentracao_real, diluicao, tamanho_mean_average, tamanho_mode_average, EV_pequenas_porcentagem, batch_nan)
 duplicatas <- duplicated(tabela_tudo_nanosight[, c("id_sample")], fromLast = TRUE) #a 2a leitura é a correta
 nanosight_sem_duplicatas <- subset(tabela_tudo_nanosight, !duplicatas)
 ##Juntar dados do nanosight com informações da amostra
@@ -67,6 +78,7 @@ sem_correspondencia <- anti_join(nanosight_sem_duplicatas, sample_information, b
 write.csv(nanosight_plus_sampleinfo, "nanosight_plus_sampleinfo_all.csv", row.names = FALSE)
 ##Amostras sem análise no Nanosight
 sample_info_sem_nanosight <- anti_join(sample_information, nanosight_sem_duplicatas, by="id_sample")
+
 ##Acrescentando coluna com e sem Transtorno Psiquiátrico (TP_transversal)
 nanosight_plus_sampleinfo <- mutate(nanosight_plus_sampleinfo, 
                                     TP_transversal = ifelse(Grupo %in% c("A_w1", "B_w1", "A_w2", "C_w2"), "caso",
@@ -75,6 +87,8 @@ nanosight_plus_sampleinfo <- mutate(nanosight_plus_sampleinfo,
 nanosight_plus_sampleinfo <- mutate(nanosight_plus_sampleinfo,
                                     TP_longitudinal = ifelse(Trajetoria %in% c("A"), "caso",
                                                              ifelse(Trajetoria %in% c("B", "C", "D"), "controle", NA)))
+#Retirar coluna que nao interessa (bage)
+nanosight_plus_sampleinfo <- nanosight_plus_sampleinfo[,-12]
 #Para analise de Levene as colunas de transtornos não podem ser numeros, portanto (F=False T=True)
 nanosight_plus_sampleinfo <- nanosight_plus_sampleinfo %>%
   mutate(
@@ -106,64 +120,6 @@ tabela_contagem_trajetoria_wave <- table(nanosight_plus_sampleinfo$Trajetoria, n
 tabela_contagem_trajetoria_wave_sem_outliers <- table(nanosight_plus_sampleinfo_sem_outliers$Trajetoria, nanosight_plus_sampleinfo_sem_outliers$wave)
 
 #Análise de Variância
-##lista de formulas para todas as amostras
-formulas <- list(
-  tamanho_mean_average ~ Trajetoria,
-  tamanho_mean_average ~ TP_longitudinal,
-  tamanho_mean_average ~ Grupo, 
-  tamanho_mean_average ~ site, 
-  tamanho_mean_average ~ dcany, 
-  tamanho_mean_average ~ dcmadep,
-  tamanho_mean_average ~ dcanyanx, 
-  tamanho_mean_average ~ dcgena, 
-  tamanho_mean_average ~ dcanyhk,
-  tamanho_mean_average ~ dcpsych, 
-  tamanho_mean_average ~ dcptsd, 
-  EV_pequenas_porcentagem ~ Trajetoria, 
-  EV_pequenas_porcentagem ~ TP_longitudinal, 
-  concentracao_real ~ Trajetoria
-)
-##nomeando as formulas
-apelidos <- c(
-  "tamanho_trajetoria",
-  "tamanho_tp_longitudinal",
-  "tamanho_grupo",
-  "tamanho_estado",
-  "tamanho_dcany",
-  "tamanho_dcmadep",
-  "tamanho_dcanyanx",
-  "tamanho_dcgena",
-  "tamanho_dcanyhk",
-  "tamanho_dcpsych",
-  "tamanho_pctsd",
-  "porcentagem_trajetoria",
-  "porcentagem_tp_longitudinal",
-  "concentracao_trajetoria"
-)
-##atribuindo os apelidos às fórmulas
-names(formulas) <- apelidos
-##Função para criar modelo ANOVA e gerar resumo
-criar_anova <- function(formula, dataset, apelidos) {
-  modelo <- aov(formula, data = dataset)
-  resumo <- summary(modelo)
-  assign(paste("summary_modelo_anova_", apelidos, sep = ""), resumo, envir = .GlobalEnv)
-  return(resumo)
-}
-##loop para criar os modelos e resumos para todas as amostras e para a exclusão dos outliers
-p_values <- c()
-p_values_sem_outliers <- c()
-for(i in seq_along(formulas)) {
-  #para a tabela com outliers
-  resumo <- criar_anova(formulas[[i]], nanosight_plus_sampleinfo, apelidos[i])
-  p_value <- resumo[[1]]$`Pr(>F)`[1]
-  p_values <- c(p_values, p_value)
-  #para a tabela sem outliers
-  resumo_sem_outliers <- criar_anova(formulas[[i]], nanosight_plus_sampleinfo_sem_outliers, apelidos[i])
-  p_value_sem_outliers <- resumo_sem_outliers[[1]]$`Pr(>F)`[1]
-  p_values_sem_outliers <- c(p_values_sem_outliers, p_value_sem_outliers)
-}
-## Criar a tabela combinada com os resultados de ambas as análises
-tabela_p_values_anova <- data.frame(Apelido = apelidos, P_Valor = p_values, P_Valor_Sem_Outliers = p_values_sem_outliers)
 ##lista de formulas para w1 e w2 + apelidos
 formulas_waves <- list(
   tamanho_mean_average ~ Trajetoria,
@@ -178,69 +134,32 @@ apelidos_waves <- c(
   "porcentagem_tp_transversal"
 )
 names(formulas_waves) <- apelidos_waves
-##função para criar modelo ANOVA e gerar resumo para waves
-criar_anova_waves <- function(formula, dataset, apelidos_waves) {
-  modelo_waves <- aov(formula, data = dataset)
-  resumo_waves <- summary(modelo_waves)
-  assign(paste("summary_modelo_anova_waves", apelidos_waves, sep = ""), resumo_waves, envir = .GlobalEnv)
-  return(resumo_waves)
-}
-##loop para criar os modelos e resumos para todas as amostras e para a exclusão dos outliers
-p_values_w1 <- c()
-p_values_w2 <- c()
-p_values_w1_sem_outliers <- c()
-p_values_w2_sem_outliers <- c()
-for(i in seq_along(formulas_waves)) {
-  #para a tabela w1
-  resumo_w1 <- criar_anova_waves(formulas_waves[[i]], nanosight_w1, apelidos_waves[i])
-  p_value_w1 <- resumo_w1[[1]]$`Pr(>F)`[1]
-  p_values_w1 <- c(p_values_w1, p_value_w1)
-  #para a tabela w2
-  resumo_w2 <- criar_anova_waves(formulas_waves[[i]], nanosight_w2, apelidos_waves[i])
-  p_value_w2 <- resumo_w2[[1]]$`Pr(>F)`[1]
-  p_values_w2 <- c(p_values_w2, p_value_w2)
-  #para a tabela w1 sem outliers
-  resumo_w1_sem_outliers <- criar_anova_waves(formulas_waves[[i]], nanosight_w1_sem_outliers, apelidos_waves[i])
-  p_value_w1_sem_outliers <- resumo_w1_sem_outliers[[1]]$`Pr(>F)`[1]
-  p_values_w1_sem_outliers <- c(p_values_w1_sem_outliers, p_value_w1_sem_outliers)
-  #para a tabela w2 sem outliers
-  resumo_w2_sem_outliers <- criar_anova_waves(formulas_waves[[i]], nanosight_w2_sem_outliers, apelidos_waves[i])
-  p_value_w2_sem_outliers <- resumo_w2_sem_outliers[[1]]$`Pr(>F)`[1]
-  p_values_w2_sem_outliers <- c(p_values_w2_sem_outliers, p_value_w2_sem_outliers)
-}
-## Criar a tabela combinada com os resultados de w1/w2 e w1/w2 sem outliers
-tabela_p_values_anova_waves <- data.frame(Apelido = apelidos_waves, P_Valor_w1 = p_values_w1, P_Valor_w2 = p_values_w2, P_Valor_w1_sem_outliers = p_values_w1_sem_outliers, P_Valor_w2_sem_outliers = p_values_w2_sem_outliers)
 
 #Premissas da ANOVA
 ##Normalidade (Shapiro não sera considerado porque a curva mostrou distribuição normal)
 ###QQPlot para visualizar a distribuição das amostras em relação a uma distribuição normal
-dados_mean <- rnorm(nanosight_plus_sampleinfo$tamanho_mean_average)
-pdf("qqplot_mean.pdf")
-qqnorm(dados_mean)
-qqline(dados_mean, col = "red")
+dados_mean_w1 <- rnorm(nanosight_w1$tamanho_mean_average)
+pdf("qqplot_mean_w1.pdf")
+qqnorm(dados_mean_w1)
+qqline(dados_mean_w1, col = "red")
 dev.off()
-dados_EV_pequenas_porcentagem <- rnorm(nanosight_plus_sampleinfo$EV_pequenas_porcentagem)
-pdf("qqplot_EV_pequenas_porcentagem.pdf")
-qqnorm(dados_EV_pequenas_porcentagem)
-qqline(dados_EV_pequenas_porcentagem, col = "red")
+dados_mean_w2 <- rnorm(nanosight_w2$tamanho_mean_average)
+pdf("qqplot_mean_w2.pdf")
+qqnorm(dados_mean_w2)
+qqline(dados_mean_w2, col = "red")
+dev.off()
+dados_EV_pequenas_porcentagem_w1 <- rnorm(nanosight_w1$EV_pequenas_porcentagem)
+pdf("qqplot_EV_pequenas_porcentagem_w1.pdf")
+qqnorm(dados_EV_pequenas_porcentagem_w1)
+qqline(dados_EV_pequenas_porcentagem_w1, col = "red")
+dev.off()
+dados_EV_pequenas_porcentagem_w2 <- rnorm(nanosight_w2$EV_pequenas_porcentagem)
+pdf("qqplot_EV_pequenas_porcentagem_w2.pdf")
+qqnorm(dados_EV_pequenas_porcentagem_w2)
+qqline(dados_EV_pequenas_porcentagem_w2, col = "red")
 dev.off()
 ##Homogeneidade (Teste de Levene)
 library("car")
-##todas
-levene_results <- c()
-levene_results_sem_outliers <- c()
-for (i in seq_along(formulas)) {
-  #para todas as amostras
-  modelo_levene <- aov(formulas[[i]], data = nanosight_plus_sampleinfo)
-  levene <- leveneTest(modelo_levene)
-  levene_results <- c(levene_results, levene$`Pr(>F)`[1])
-  #para amostras sem outliers
-  modelo_levene_sem_outliers <- aov(formulas[[i]], data = nanosight_plus_sampleinfo_sem_outliers)
-  levene_sem_outliers <- leveneTest(modelo_levene_sem_outliers)
-  levene_results_sem_outliers <- c(levene_results_sem_outliers, levene_sem_outliers$`Pr(>F)`[1])
-}
-tabela_levene <- data.frame(Apelido = apelidos, P_Valor_Levene = levene_results, P_Valor_Levene_sem_outliers = levene_results_sem_outliers)
-##waves
 levene_results_w1 <- c()
 levene_results_w2 <- c()
 levene_results_w1_sem_outliers <- c()
@@ -249,44 +168,29 @@ for (i in seq_along(formulas_waves)) {
   #para w1
   modelo_levene_w1 <- aov(formulas_waves[[i]], data = nanosight_w1)
   levene_w1 <- leveneTest(modelo_levene_w1)
-  levene_results_w1 <- c(levene_w1, levene$`Pr(>F)`[1])
+  levene_results_w1 <- c(levene_results_w1, levene_w1$`Pr(>F)`[1])
   #para w2
   modelo_levene_w2 <- aov(formulas_waves[[i]], data = nanosight_w2)
   levene_w2 <- leveneTest(modelo_levene_w2)
-  levene_results_w2 <- c(levene_w2, levene$`Pr(>F)`[1])
+  levene_results_w2 <- c(levene_results_w2, levene_w2$`Pr(>F)`[1])
   #para w1 sem outliers
   modelo_levene_w1_sem_outliers <- aov(formulas_waves[[i]], data = nanosight_w1_sem_outliers)
   levene_w1_sem_outliers <- leveneTest(modelo_levene_w1_sem_outliers)
-  levene_results_w1_sem_outliers <- c(levene_w1_sem_outliers, levene$`Pr(>F)`[1])
+  levene_results_w1_sem_outliers <- c(levene_results_w1_sem_outliers, levene_w1_sem_outliers$`Pr(>F)`[1])
   #para w2 sem outliers
   modelo_levene_w2_sem_outliers <- aov(formulas_waves[[i]], data = nanosight_w2_sem_outliers)
   levene_w2_sem_outliers <- leveneTest(modelo_levene_w2_sem_outliers)
-  levene_results_w2_sem_outliers <- c(levene_w2_sem_outliers, levene$`Pr(>F)`[1])
+  levene_results_w2_sem_outliers <- c(levene_results_w2_sem_outliers, levene_w2_sem_outliers$`Pr(>F)`[1])
 }
 tabela_levene_waves <- data.frame(Apelido = apelidos_waves, P_Valor_Levene_w1 = levene_results_w1, P_Valor_Levene_w2 = levene_results_w2, P_Valor_Levene_w1_sem_outliers = levene_results_w1_sem_outliers, P_Valor_Levene_w2_sem_outliers = levene_results_w2_sem_outliers)
-
+##Variâncias
+variancias_tamanho <- aggregate(tamanho_mean_average ~ Grupo, data = nanosight_plus_sampleinfo_sem_outliers, FUN = var)
+variancias_porcentagem <- aggregate(EV_pequenas_porcentagem ~ Grupo, data = nanosight_plus_sampleinfo_sem_outliers, FUN = var)
+variancias_tamanho_TP_w1 <- aggregate(tamanho_mean_average ~ TP_transversal, data = nanosight_w1_sem_outliers, FUN = var)
+variancias_tamanho_TP_w2 <- aggregate(tamanho_mean_average ~ TP_transversal, data = nanosight_w2_sem_outliers, FUN = var)
+variancias_porcentagem_TP_w1 <- aggregate(EV_pequenas_porcentagem ~ TP_transversal, data = nanosight_w1_sem_outliers, FUN = var)
+variancias_porcentagem_TP_w2 <- aggregate(EV_pequenas_porcentagem ~ TP_transversal, data = nanosight_w2_sem_outliers, FUN = var)
 #Anova de Welch (caso não exista homogeneidade de variâncias) #obs tirei o dcmania pq só tinha uma pessoa e dava erro no teste
-##todas
-executar_teste_anova_welch <- function(formula, data) {
-  resultado_teste_anova_welch <- oneway.test(formula, data = data, var.equal = FALSE)
-  return(resultado_teste_anova_welch$p.value)
-}
-p_valores_welch <- numeric(length(formulas))
-p_valores_welch_sem_outliers <- numeric(length(formulas))
-for (i in seq_along(formulas)) {
-  #todas
-  resultado_teste_welch <- oneway.test(formulas[[i]], data = nanosight_plus_sampleinfo, var.equal = FALSE)
-  p_valores_welch[i] <- as.character(resultado_teste_welch$p.value)
-  #sem outliers
-  resultado_teste_welch_sem_outliers <- oneway.test(formulas[[i]], data = nanosight_plus_sampleinfo_sem_outliers, var.equal = FALSE)
-  p_valores_welch_sem_outliers[i] <- as.character(resultado_teste_welch_sem_outliers$p.value)
-}
-tabela_welch <- data.frame(
-  Teste = apelidos,
-  P_Valor = p_valores_welch, P_Valor_sem_outliers = p_valores_welch_sem_outliers
-)
-##waves
-###w1
 p_valores_welch_w1 <- numeric(length(formulas_waves))
 p_valores_welch_w2 <- numeric(length(formulas_waves))
 p_valores_welch_w1_sem_outliers <- numeric(length(formulas_waves))
@@ -356,24 +260,3 @@ t.test(nanosight_pares_C_w1$tamanho_mean_average, nanosight_pares_C_w2$tamanho_m
 t.test(nanosight_pares_C_w1$EV_pequenas_porcentagem, nanosight_pares_C_w2$EV_pequenas_porcentagem, paired = TRUE) #sem diferença (p=0,7)
 t.test(nanosight_pares_D_w1$tamanho_mean_average, nanosight_pares_D_w2$tamanho_mean_average, paired = TRUE) #sem diferença (p=0,8)
 t.test(nanosight_pares_D_w1$EV_pequenas_porcentagem, nanosight_pares_D_w2$EV_pequenas_porcentagem, paired = TRUE) #sem diferença (p=0,5)
-
-######################################
-
-#Testes não paramétricos para avaliar w1-w2 e TP/sem TP
-##Teste de normalidade (pressuposto para o teste t de student)
-library("nortest")
-lillie.test(nanosight_plus_sampleinfo$tamanho_mean_average) #Não deu normal, p < 0,05
-##Teste de Shapiro para normalidade
-shapiro.test(nanosight_plus_sampleinfo$tamanho_mean_average[nanosight_plus_sampleinfo$TP_transversal == "controle"]) #limítrofe p=0,05113
-shapiro.test(nanosight_plus_sampleinfo$tamanho_mean_average[nanosight_plus_sampleinfo$TP_transversal == "caso"]) #fora da normalidade p=0,003866
-##Homogeneidade de variância
-library(car)
-leveneTest(tamanho_mean_average ~ TP_transversal, data = nanosight_plus_sampleinfo, center = median) #DEU
-##Teste T
-t.test(nanosight_plus_sampleinfo$tamanho_mean_average ~ nanosight_plus_sampleinfo$TP_transversal, paired = F, conf.level = 0.95, var.eq = T) #sem diferença
-##Tamanho do efeito
-library("effsize")
-cohen.d(tamanho_mean_average ~ TP_transversal, data = nanosight_plus_sampleinfo, paired = F) #sem diferença
-
-##################
-
