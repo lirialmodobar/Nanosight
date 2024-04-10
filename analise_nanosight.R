@@ -66,7 +66,8 @@ numeros_batch <- seq(1, 22)
 replacement <- setNames(numeros_batch, datas_unicas)
 batch_nan$batch_nan <- replacement[batch_nan$batch_nan]
 ##Juntando todos os dados obtidos do nanosight em uma tabela
-tabela_tudo_nanosight <- data.frame(id_sample, concentracao_real, diluicao, tamanho_mean_average, tamanho_mode_average, EV_pequenas_porcentagem, batch_nan)
+tabela_tudo_nanosight <- data.frame(id_sample, diluicao, concentracao_real, tamanho_mean_average, EV_pequenas_porcentagem, batch_nan, tamanho_mode_average)
+colnames(tabela_tudo_nanosight)[2] <- "diluicao"
 duplicatas <- duplicated(tabela_tudo_nanosight[, c("id_sample")], fromLast = TRUE) #a 2a leitura é a correta
 nanosight_sem_duplicatas <- subset(tabela_tudo_nanosight, !duplicatas)
 ##Juntar dados do nanosight com informações da amostra
@@ -101,8 +102,9 @@ nanosight_plus_sampleinfo <- nanosight_plus_sampleinfo %>%
     dcmania = ifelse(dcmania == 0, "F", "T"),
     dcptsd = ifelse(dcptsd == 0, "F", "T")
   )
-##Retirando duas linhas da tabela (pq no boxplot de média de tamanho elas ficaram muito fora)
-nanosight_plus_sampleinfo_sem_outliers <- nanosight_plus_sampleinfo[-c(133,170), ]
+##Retirando outliers
+nanosight_plus_sampleinfo$zscore_mean <- scale(nanosight_plus_sampleinfo$tamanho_mean_average)
+nanosight_plus_sampleinfo_sem_outliers <- nanosight_plus_sampleinfo[nanosight_plus_sampleinfo$zscore_mean >= -3.0 & nanosight_plus_sampleinfo$zscore_mean <= 3.0, ]
 ##Tabela só com w1 e só w2
 nanosight_w1 <- subset(nanosight_plus_sampleinfo, wave == "w1")
 nanosight_w2 <- subset(nanosight_plus_sampleinfo, wave == "w2")
@@ -118,6 +120,22 @@ nanosight_sem_pares_sem_outliers <- nanosight_plus_sampleinfo_sem_outliers[linha
 ##Número de amostras dos grupos e waves
 tabela_contagem_trajetoria_wave <- table(nanosight_plus_sampleinfo$Trajetoria, nanosight_plus_sampleinfo$wave)
 tabela_contagem_trajetoria_wave_sem_outliers <- table(nanosight_plus_sampleinfo_sem_outliers$Trajetoria, nanosight_plus_sampleinfo_sem_outliers$wave)
+
+#Teste Kruskall-Wallis
+kruskal.test(tamanho_mean_average~Trajetoria, data = dados_ordenados_w1) #p=0.03573
+kruskal.test(tamanho_mean_average~Trajetoria, data = nanosight_w2_sem_outliers) #p=0.4106
+kruskal.test(EV_pequenas_porcentagem~Trajetoria, data = nanosight_w1_sem_outliers) #p=0.00301
+kruskal.test(EV_pequenas_porcentagem~Trajetoria, data = nanosight_w2_sem_outliers) #p=0.03138
+
+#Teste U de Mann-Whitney
+pairwise.wilcox.test(nanosight_w1_sem_outliers$tamanho_mean_average, nanosight_w1_sem_outliers$Trajetoria,
+                     p.adjust.method = "BH") #B-D
+pairwise.wilcox.test(nanosight_w2_sem_outliers$tamanho_mean_average, nanosight_w2_sem_outliers$Trajetoria,
+                     p.adjust.method = "BH") #não, em concordancia com kruskal
+pairwise.wilcox.test(nanosight_w1_sem_outliers$EV_pequenas_porcentagem, nanosight_w1_sem_outliers$Trajetoria,
+                     p.adjust.method = "BH") #A-B ; B-D
+pairwise.wilcox.test(nanosight_w2_sem_outliers$EV_pequenas_porcentagem, nanosight_w2_sem_outliers$Trajetoria,
+                     p.adjust.method = "BH") #A-B ; B-D
 
 #Análise de Variância
 ##lista de formulas para w1 e w2 + apelidos
@@ -138,25 +156,25 @@ names(formulas_waves) <- apelidos_waves
 #Premissas da ANOVA
 ##Normalidade (Shapiro não sera considerado porque a curva mostrou distribuição normal)
 ###QQPlot para visualizar a distribuição das amostras em relação a uma distribuição normal
-dados_mean_w1 <- rnorm(nanosight_w1$tamanho_mean_average)
-pdf("qqplot_mean_w1.pdf")
-qqnorm(dados_mean_w1)
-qqline(dados_mean_w1, col = "red")
+dados_mean_w1_sem_outliers <- rnorm(nanosight_w1_sem_outliers$tamanho_mean_average)
+pdf("qqplot_mean_w1_sem_outliers.pdf")
+qqnorm(dados_mean_w1_sem_outliers)
+qqline(dados_mean_w1_sem_outliers, col = "red")
 dev.off()
-dados_mean_w2 <- rnorm(nanosight_w2$tamanho_mean_average)
-pdf("qqplot_mean_w2.pdf")
-qqnorm(dados_mean_w2)
-qqline(dados_mean_w2, col = "red")
+dados_mean_w2_sem_outliers <- rnorm(nanosight_w2_sem_outliers$tamanho_mean_average)
+pdf("qqplot_mean_w2_sem_outliers.pdf")
+qqnorm(dados_mean_w2_sem_outliers)
+qqline(dados_mean_w2_sem_outliers, col = "red")
 dev.off()
-dados_EV_pequenas_porcentagem_w1 <- rnorm(nanosight_w1$EV_pequenas_porcentagem)
-pdf("qqplot_EV_pequenas_porcentagem_w1.pdf")
-qqnorm(dados_EV_pequenas_porcentagem_w1)
-qqline(dados_EV_pequenas_porcentagem_w1, col = "red")
+dados_EV_pequenas_porcentagem_w1_sem_outliers <- rnorm(nanosight_w1_sem_outliers$EV_pequenas_porcentagem)
+pdf("qqplot_EV_pequenas_porcentagem_w1_sem_outliers.pdf")
+qqnorm(dados_EV_pequenas_porcentagem_w1_sem_outliers)
+qqline(dados_EV_pequenas_porcentagem_w1_sem_outliers, col = "red")
 dev.off()
-dados_EV_pequenas_porcentagem_w2 <- rnorm(nanosight_w2$EV_pequenas_porcentagem)
-pdf("qqplot_EV_pequenas_porcentagem_w2.pdf")
-qqnorm(dados_EV_pequenas_porcentagem_w2)
-qqline(dados_EV_pequenas_porcentagem_w2, col = "red")
+dados_EV_pequenas_porcentagem_w2_sem_outliers <- rnorm(nanosight_w2_sem_outliers$EV_pequenas_porcentagem)
+pdf("qqplot_EV_pequenas_porcentagem_w2_sem_outliers.pdf")
+qqnorm(dados_EV_pequenas_porcentagem_w2_sem_outliers)
+qqline(dados_EV_pequenas_porcentagem_w2_sem_outliers, col = "red")
 dev.off()
 ##Homogeneidade (Teste de Levene)
 library("car")
@@ -238,7 +256,7 @@ oneway(nanosight_w2_sem_outliers$Trajetoria, y=nanosight_w2_sem_outliers$EV_pequ
 
 #Analises pareadas
 ##Separando os dados
-nanosight_pares <- nanosight_plus_sampleinfo[duplicated(nanosight_plus_sampleinfo$subjectid) | duplicated(nanosight_plus_sampleinfo$subjectid, fromLast = TRUE), ]
+nanosight_pares <- nanosight_plus_sampleinfo_sem_outliers[duplicated(nanosight_plus_sampleinfo_sem_outliers$subjectid) | duplicated(nanosight_plus_sampleinfo_sem_outliers$subjectid, fromLast = TRUE), ]
 nanosight_pares_A <- subset(nanosight_pares, Trajetoria == "A")
 nanosight_pares_B <- subset(nanosight_pares, Trajetoria == "B")
 nanosight_pares_C <- subset(nanosight_pares, Trajetoria == "C")
@@ -260,3 +278,95 @@ t.test(nanosight_pares_C_w1$tamanho_mean_average, nanosight_pares_C_w2$tamanho_m
 t.test(nanosight_pares_C_w1$EV_pequenas_porcentagem, nanosight_pares_C_w2$EV_pequenas_porcentagem, paired = TRUE) #sem diferença (p=0,7)
 t.test(nanosight_pares_D_w1$tamanho_mean_average, nanosight_pares_D_w2$tamanho_mean_average, paired = TRUE) #sem diferença (p=0,8)
 t.test(nanosight_pares_D_w1$EV_pequenas_porcentagem, nanosight_pares_D_w2$EV_pequenas_porcentagem, paired = TRUE) #sem diferença (p=0,5)
+
+######################################
+
+#Testes não paramétricos para avaliar w1-w2 e TP/sem TP
+##Teste de normalidade (pressuposto para o teste t de student)
+library("nortest")
+lillie.test(nanosight_plus_sampleinfo$tamanho_mean_average) #Não deu normal, p < 0,05
+##Teste de Shapiro para normalidade
+shapiro.test(nanosight_plus_sampleinfo$tamanho_mean_average[nanosight_plus_sampleinfo$TP_transversal == "controle"]) #limítrofe p=0,05113
+shapiro.test(nanosight_plus_sampleinfo$tamanho_mean_average[nanosight_plus_sampleinfo$TP_transversal == "caso"]) #fora da normalidade p=0,003866
+##Homogeneidade de variância
+library(car)
+leveneTest(tamanho_mean_average ~ TP_transversal, data = nanosight_plus_sampleinfo, center = median) #DEU
+##Teste T
+t.test(nanosight_plus_sampleinfo$tamanho_mean_average ~ nanosight_plus_sampleinfo$TP_transversal, paired = F, conf.level = 0.95, var.eq = T) #sem diferença
+##Tamanho do efeito
+library("effsize")
+cohen.d(tamanho_mean_average ~ TP_transversal, data = nanosight_plus_sampleinfo, paired = F) #sem diferença
+
+##################
+
+#### Tentativas de encontrar os melhores testes p verificar diferença entre os grupos
+
+#Permanova
+perm.trajetorias <- adonis2(tamanho_mean_average ~ Trajetoria, data = nanosight_w1_sem_outliers)
+
+#Similaridade
+similaridade_morisita_horn <- vegan::vegdist(nanosight_w1_sem_outliers$tamanho_mean_average, method = "horn")
+dendro <- hclust(d = similaridade_morisita_horn, method = "average")
+plot(dendro, main = "Dendrograma", 
+     ylab = "Similaridade (índice de Horn)",
+     xlab="", sub="")
+
+#Summary statistics by groups
+library("plotrix")
+sum_stat_w1_sem_outliers_mean_trajetoria <- group_by(nanosight_w1_sem_outliers, Trajetoria) %>%
+  summarise(
+    count = n(),
+    mean = mean(tamanho_mean_average, na.rm = TRUE),
+    sd = sd(tamanho_mean_average, na.rm = TRUE),
+    std = std.error(tamanho_mean_average, na.rm = TRUE),
+    median = median(tamanho_mean_average, na.rm = TRUE),
+    IQR = IQR(tamanho_mean_average, na.rm = TRUE)
+  )
+sum_stat_w2_sem_outliers_mean_trajetoria <- group_by(nanosight_w2_sem_outliers, Trajetoria) %>%
+  summarise(
+    count = n(),
+    mean = mean(tamanho_mean_average, na.rm = TRUE),
+    sd = sd(tamanho_mean_average, na.rm = TRUE),
+    std = std.error(tamanho_mean_average, na.rm = TRUE),
+    median = median(tamanho_mean_average, na.rm = TRUE),
+    IQR = IQR(tamanho_mean_average, na.rm = TRUE)
+  )
+sum_stat_w1_sem_outliers_porcentagem_trajetoria <- group_by(nanosight_w1_sem_outliers, Trajetoria) %>%
+  summarise(
+    count = n(),
+    mean = mean(EV_pequenas_porcentagem, na.rm = TRUE),
+    sd = sd(EV_pequenas_porcentagem, na.rm = TRUE),
+    std = std.error(tamanho_mean_average, na.rm = TRUE),
+    median = median(EV_pequenas_porcentagem, na.rm = TRUE),
+    IQR = IQR(EV_pequenas_porcentagem, na.rm = TRUE)
+  )
+sum_stat_w2_sem_outliers_porcentagem_trajetoria <- group_by(nanosight_w2_sem_outliers, Trajetoria) %>%
+  summarise(
+    count = n(),
+    mean = mean(EV_pequenas_porcentagem, na.rm = TRUE),
+    sd = sd(EV_pequenas_porcentagem, na.rm = TRUE),
+    std = std.error(tamanho_mean_average, na.rm = TRUE),
+    median = median(EV_pequenas_porcentagem, na.rm = TRUE),
+    IQR = IQR(EV_pequenas_porcentagem, na.rm = TRUE)
+  )
+
+##Testes
+#Teste de Friedman
+combined_data <- data.frame(Group_A_w1 = nanosight_pares_A_w1$tamanho_mean_average,
+                            Group_A_w2 = nanosight_pares_A_w2$tamanho_mean_average)
+combined_data$Blocks <- 1:nrow(combined_data)
+#Teste de wilcox pareado
+
+#iqr e desvio padrao
+nanosight_w1_D <- subset(nanosight_w1, Trajetoria == "D")
+iqr_D_w1 <- IQR(nanosight_w1_D$EV_pequenas_porcentagem, na.rm = TRUE)
+iqr_D_w1
+iqr_D_w1*1.5
+nanosight_w2_D <- subset(nanosight_w2, Trajetoria == "D")
+iqr_D_w2 <- IQR(nanosight_w2_D$EV_pequenas_porcentagem, na.rm = TRUE)
+iqr_D_w2
+iqr_D_w2*1.5
+
+desviopadrao <- sd(nanosight_plus_sampleinfo$EV_pequenas_porcentagem, na.rm = TRUE)
+desviopadrao
+3*desviopadrao
