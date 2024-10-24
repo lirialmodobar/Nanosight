@@ -35,10 +35,10 @@ resultado_robusto_t1way_w2_porcentagem <- t1way(EV_pequenas_porcentagem~Trajetor
 library(dunn.test)
 dunn.test(nanosight_w1_sem_outliers_mean$tamanho_mean_average, nanosight_w1_sem_outliers_mean$Trajetoria, kw = TRUE, label = TRUE) #B-A e B-D
 dunn.test(nanosight_w1_sem_outliers_porcentagem$EV_pequenas_porcentagem, nanosight_w1_sem_outliers_porcentagem$Trajetoria, kw = TRUE, label = TRUE) #B-A; B-C; B-D
-dunn.test(nanosight_w1_sem_outliers_concentracao$concentracao_real, nanosight_w1_sem_outliers_concentracao$Trajetoria, kw = TRUE, label = TRUE)
+dunn.test(nanosight_w1_sem_outliers_concentracao$concentracao_real, nanosight_w1_sem_outliers_concentracao$Trajetoria, kw = TRUE, label = TRUE) #A-B; B-C; B-D
 dunn.test(nanosight_w2_sem_outliers_mean$tamanho_mean_average, nanosight_w2_sem_outliers_mean$Trajetoria, kw = TRUE, label = TRUE) #sem diferença
 dunn.test(nanosight_w2_sem_outliers_porcentagem$EV_pequenas_porcentagem, nanosight_w2_sem_outliers_porcentagem$Trajetoria, kw = TRUE, label = TRUE) #B-A; B-D
-dunn.test(nanosight_w2_sem_outliers_concentracao$concentracao_real, nanosight_w2_sem_outliers_concentracao$Trajetoria, kw = TRUE, label = TRUE)
+dunn.test(nanosight_w2_sem_outliers_concentracao$concentracao_real, nanosight_w2_sem_outliers_concentracao$Trajetoria, kw = TRUE, label = TRUE) #A-B; B-C;B-D
 
 #### possibilidade para análise com outras variáveis
 #ANOVA robusta de 2 vias
@@ -48,3 +48,6 @@ resultado_anova_duas_vias_tam_batch_traj <- aov(tamanho_mean_average ~ batch_nan
 summary(resultado_anova_duas_vias_tam_batch_traj)
 resultado_anova_duas_vias_conc_batch_traj <- aov(concentracao_real ~ batch_nan * Trajetoria, data = nanosight_plus_sampleinfo)
 summary(resultado_anova_duas_vias_conc_batch_traj)
+
+#teste Pearson
+cor(nanosight_plus_sampleinfo$concentracao_real, nanosight_plus_sampleinfo$tamanho_mean_average, method = "pearson") #0.27 (correlação media)
