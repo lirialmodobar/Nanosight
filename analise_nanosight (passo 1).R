@@ -117,8 +117,8 @@ nanosight_plus_sampleinfo$zscore_mean <- scale(nanosight_plus_sampleinfo$tamanho
 nanosight_plus_sampleinfo_sem_outliers_mean <- nanosight_plus_sampleinfo[nanosight_plus_sampleinfo$zscore_mean >= -3.0 & nanosight_plus_sampleinfo$zscore_mean <= 3.0, ]
 nanosight_plus_sampleinfo$zscore_porcentagem <- scale(nanosight_plus_sampleinfo$EV_pequenas_porcentagem)
 nanosight_plus_sampleinfo_sem_outliers_porcentagem <- nanosight_plus_sampleinfo[nanosight_plus_sampleinfo$zscore_porcentagem >= -3.0 & nanosight_plus_sampleinfo$zscore_porcentagem <= 3.0, ]
-nanosight_plus_sampleinfo$zscore_concentracao <- scale(nanosight_plus_sampleinfo$tamanho_mean_average)
-nanosight_plus_sampleinfo_sem_outliers_concentracao <- nanosight_plus_sampleinfo[nanosight_plus_sampleinfo$zscore_concentracao >= -3.0 & nanosight_plus_sampleinfo$zscore_mean <= 3.0, ]
+nanosight_plus_sampleinfo$zscore_concentracao <- scale(nanosight_plus_sampleinfo$concentracao_real)
+nanosight_plus_sampleinfo_sem_outliers_concentracao <- nanosight_plus_sampleinfo[nanosight_plus_sampleinfo$zscore_concentracao >= -3.0 & nanosight_plus_sampleinfo$zscore_concentracao <= 3.0, ]
 nanosight_outliers <- anti_join(nanosight_plus_sampleinfo, nanosight_plus_sampleinfo_sem_outliers_mean, by = c("id_sample"))
 
 ##Tabela só com w1 e só w2
