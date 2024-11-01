@@ -21,7 +21,7 @@ nanosight_w1_sem_outliers_porcentagem <- read.csv("nanosight_w1_sem_outliers_por
 nanosight_w2_sem_outliers_porcentagem <- read.csv("nanosight_w2_sem_outliers_porcentagem.csv")
 nanosight_plus_sampleinfo_sem_outliers_mean <- read.csv('nanosight_plus_sampleinfo_sem_outliers_mean.csv')
 nanosight_plus_sampleinfo_sem_outliers_porcentagem <- read.csv('nanosight_plus_sampleinfo_sem_outliers_porcentagem.csv')
-nanosight_plus_sampleinfo_sem_outliers_concentracao <- read.csv("Downloads/nanosight_plus_sampleinfo_sem_outliers_concentracao.csv")
+nanosight_plus_sampleinfo_sem_outliers_concentracao <- read.csv("nanosight_plus_sampleinfo_sem_outliers_concentracao.csv")
 nanosight_w1_sem_outliers_concentracao <- subset(nanosight_plus_sampleinfo_sem_outliers_concentracao, wave == "w1")
 nanosight_w2_sem_outliers_concentracao <- subset(nanosight_plus_sampleinfo_sem_outliers_concentracao, wave == "w2")
 
@@ -114,8 +114,8 @@ shapiro_w1_tamanho <- shapiro_test(nanosight_w1_sem_outliers_mean$tamanho_mean_a
 shapiro_w2_tamanho <- shapiro_test(nanosight_w2_sem_outliers_mean$tamanho_mean_average)
 shapiro_w1_porc <- shapiro_test(nanosight_w1_sem_outliers_porcentagem$EV_pequenas_porcentagem)
 shapiro_w2_porc <- shapiro_test(nanosight_w2_sem_outliers_porcentagem$EV_pequenas_porcentagem)
-shapiro_w1_conc <- shapiro.test(nanosight_w1_sem_outliers_concentracao$concentracao_real) #5.393e-09 
-shapiro_w2_conc <- shapiro.test(nanosight_w2_sem_outliers_concentracao$concentracao_real) #9.005e-08
+shapiro_w1_conc <- shapiro_test(nanosight_w1_sem_outliers_concentracao$concentracao_real) #5.393e-09 
+shapiro_w2_conc <- shapiro_test(nanosight_w2_sem_outliers_concentracao$concentracao_real) #9.005e-08
 
 
 shapiro_table <- rbind(shapiro_w1_tamanho, shapiro_w1_porc, shapiro_w1_conc, shapiro_w2_tamanho, shapiro_w2_porc, shapiro_w2_conc)
@@ -171,19 +171,21 @@ dev.off()
 
 ###Homogeneidade (Teste de Levene)
 
-levene_w1_tamanho <- levene_Test(nanosight_w1_sem_outliers_mean, tamanho_mean_average ~ Trajetoria)
-levene_w2_tamanho <- levene_Test(nanosight_w2_sem_outliers_mean, tamanho_mean_average ~ Trajetoria)
-levene_w1_porc <- levene_Test(nanosight_w1_sem_outliers_porcentagem, EV_pequenas_porcentagem ~ Trajetoria)
-levene_w2_porc <- levene_Test(nanosight_w2_sem_outliers_porcentagem, EV_pequenas_porcentagem ~ Trajetoria)
+levene_w1_tamanho <- leveneTest(tamanho_mean_average ~ Trajetoria, data = nanosight_w1_sem_outliers_mean)
+levene_w2_tamanho <- leveneTest(tamanho_mean_average ~ Trajetoria, data = nanosight_w2_sem_outliers_mean)
+levene_w1_porc <- leveneTest(EV_pequenas_porcentagem ~ Trajetoria, data = nanosight_w1_sem_outliers_porcentagem)
+levene_w2_porc <- leveneTest(EV_pequenas_porcentagem ~ Trajetoria, data = nanosight_w2_sem_outliers_porcentagem)
 levene_conc_batch <- leveneTest(concentracao_real ~ batch_nan, data = nanosight_plus_sampleinfo_sem_outliers_concentracao) #0.007
 levene_w1_conc <- leveneTest(concentracao_real ~ Trajetoria*batch_nan, data = nanosight_w1_sem_outliers_concentracao) #0.8
 levene_w2_conc <- leveneTest(concentracao_real ~ Trajetoria*batch_nan, data = nanosight_w2_sem_outliers_concentracao) #0.8
 
 
 levene_table <- rbind(levene_w1_tamanho, levene_w1_porc, levene_w1_conc, levene_w2_tamanho, levene_w2_porc, levene_w2_conc, levene_conc_batch)
-levene_table <- data.frame(dados, levene_table) 
-levene_significante <- subset(levene_table, levene_table$p < 0.05)
-levene_significante <- mutate(levene_significante, p = as.character(p))
+dados_levene <- c(dados, "levene_conc_batch")
+dados_levene <- rep(dados_levene, each = 2)
+levene_table <- data.frame(dados_levene, levene_table)
+rownames(levene_table) <- NULL
+levene_significante <- subset(levene_table, levene_table$Pr..F. < 0.05)
 salvar_tabela(levene_significante, "levene_significante.png")
 
 
@@ -199,7 +201,6 @@ welch_table <- rbind(welch_w1_tamanho, welch_w1_porc, welch_conc_batch)
 welch_table <- data.frame(dados_w1, welch_table) [-2]
 
 welch_significante <- subset(welch_table, welch_table$p < 0.05)
-welch_significante <- mutate(welch_significante, p = as.character(p))
 salvar_tabela(welch_significante, "welch_significante.png")
 
 
@@ -226,7 +227,8 @@ anova_w1_conc <- anova_test(nanosight_w1_sem_outliers_concentracao, zscore_conce
 anova_w2_conc <- anova_test(nanosight_w2_sem_outliers_concentracao, zscore_concentracao ~ Trajetoria*batch_nan) #significante
 
 anova_table <- rbind(anova_w2_tamanho, anova_w2_porc, anova_w2_conc, anova_w1_conc)
-anova_table <- data.frame(dados_w2, "concentracao_w1", anova_table)
+dados_anova <- c(dados_w2, rep("concentracao w2", each = 2), rep("concentracao w1", each = 3))
+anova_table <- data.frame(dados_anova, anova_table)
 
 anova_table_significante <- subset(anova_table, anova_table$p..05 != "") [-7]
 
@@ -320,7 +322,8 @@ kw_jmv_conc_w1 <- as.data.frame(kw_dscf_conc_w1$table) #significante
 kw_jmv_conc_w2 <- as.data.frame(kw_dscf_conc_w2$table) #significante
 
 kw_jmv_table <- rbind(kw_jmv_tamanho_w1, kw_jmv_porc_w1, kw_jmv_conc_w1, kw_jmv_tamanho_w2, kw_jmv_porc_w2, kw_jmv_conc_w2, kw_jmv_conc_batch)
-kw_jmv_table <- cbind(dados, "concentracaoxbatch", kw_jmv_table) [-2]
+dados_kw_jmv <- c(dados, "concentracaoxbatch")
+kw_jmv_table <- cbind(dados_kw_jmv, kw_jmv_table) [-2]
 kw_jmv_significante <- subset(kw_jmv_table, kw_jmv_table$p < 0.05)
 row.names(kw_jmv_significante) <- NULL
 salvar_tabela(kw_jmv_significante, "kw_jmv_significante")
@@ -335,7 +338,7 @@ dscf_porc_w1 <- cbind(dados = "porcentagem EVs < 128.5 w1", dscf_porc_w1)
 dscf_porc_w2 <- as.data.frame(kw_dscf_porc_w2$comparisons[[1]])
 dscf_porc_w2 <- cbind(dados = "porcentagem EVs < 128.5 w2", dscf_porc_w2)
 dscf_conc_batch <- as.data.frame(kw_dscf_conc_batch$comparisons[[1]])
-dscf_conc_batch <- cbind(dados = "concentracao", dscf_conc_batch)
+dscf_conc_batch <- cbind(dados = "concentracaoxbatch", dscf_conc_batch)
 dscf_conc_w1 <- as.data.frame(kw_dscf_conc_w1$comparisons[[1]])
 dscf_conc_w1 <- cbind(dados = "concentracao w1", dscf_conc_w1)
 dscf_conc_w2 <- as.data.frame(kw_dscf_conc_w2$comparisons[[1]])
@@ -346,5 +349,4 @@ dscf_table <- rbind(dscf_tamanho_w1, dscf_porc_w1, dscf_conc_w1, dscf_tamanho_w2
 dscf_significante <- subset(dscf_table, dscf_table$p < 0.05)
 row.names(dscf_significante) <- NULL
 salvar_tabela(dscf_significante, "dscf_significante.png")
-
 
