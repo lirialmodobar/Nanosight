@@ -13,20 +13,7 @@ library(car)
 #Definir pasta de trabalho 
 setwd(seu_wd)
 
-#Importar tabelas base
-
-nanosight_w1_sem_outliers_mean <- read.csv("nanosight_w1_sem_outliers_mean.csv")
-nanosight_w2_sem_outliers_mean <- read.csv("nanosight_w2_sem_outliers_mean.csv")
-nanosight_w1_sem_outliers_porcentagem <- read.csv("nanosight_w1_sem_outliers_porcentagem.csv")
-nanosight_w2_sem_outliers_porcentagem <- read.csv("nanosight_w2_sem_outliers_porcentagem.csv")
-nanosight_plus_sampleinfo_sem_outliers_mean <- read.csv('nanosight_plus_sampleinfo_sem_outliers_mean.csv')
-nanosight_plus_sampleinfo_sem_outliers_porcentagem <- read.csv('nanosight_plus_sampleinfo_sem_outliers_porcentagem.csv')
-nanosight_plus_sampleinfo_sem_outliers_concentracao <- read.csv("nanosight_plus_sampleinfo_sem_outliers_concentracao.csv")
-nanosight_w1_sem_outliers_concentracao <- subset(nanosight_plus_sampleinfo_sem_outliers_concentracao, wave == "w1")
-nanosight_w2_sem_outliers_concentracao <- subset(nanosight_plus_sampleinfo_sem_outliers_concentracao, wave == "w2")
-
-## Tabela descritiva
-
+## Tabelas
 custom_theme = ttheme_default(
   core = list(
     bg_params = list(fill = "#B0C4DE", col = "black"),  # Blue-grey background for core cells
@@ -39,7 +26,7 @@ custom_theme = ttheme_default(
 )
 
 salvar_tabela <- function(df, png_name) {
-
+  
   # Create the tableGrob
   table_grob <- tableGrob(df, theme = custom_theme, rows = NULL)
   
@@ -53,49 +40,18 @@ salvar_tabela <- function(df, png_name) {
   dev.off()
 }
 
-### tamanho
+#Importar tabelas base
 
-descriptives_table_w1_mean <- descriptives(data = nanosight_w1_sem_outliers_mean, tamanho_mean_average, splitBy = "Trajetoria", ci = TRUE,
-se = TRUE, variance = TRUE, mode = TRUE, desc = "rows")
-descriptives_table_w1_mean <- as.data.frame(descriptives_table_w1_mean$descriptivesT)
-descriptives_table_w1_mean[descriptives_table_w1_mean == "tamanho_mean_average"] <- "tamanho w1"
-salvar_tabela(descriptives_table_w1_mean, "tamanho_w1_descritivo.png")
+nanosight_plus_sampleinfo_sem_outliers_mean <- read.csv("nanosight_plus_sampleinfo_sem_outliers_mean.csv")
+nanosight_plus_sampleinfo_sem_outliers_porcentagem <- read.csv("nanosight_plus_sampleinfo_sem_outliers_porcentagem.csv")
+nanosight_w1_sem_outliers_mean <- subset(nanosight_plus_sampleinfo_sem_outliers_mean, wave == "w1")
+nanosight_w2_sem_outliers_mean <- subset(nanosight_plus_sampleinfo_sem_outliers_mean, wave == "w2")
+nanosight_w1_sem_outliers_porcentagem <- subset(nanosight_plus_sampleinfo_sem_outliers_porcentagem, wave == "w1")
+nanosight_w2_sem_outliers_porcentagem <- subset(nanosight_plus_sampleinfo_sem_outliers_porcentagem, wave == "w2")
+nanosight_plus_sampleinfo_sem_outliers_concentracao <- read.csv("nanosight_plus_sampleinfo_sem_outliers_concentracao.csv")
+nanosight_w1_sem_outliers_concentracao <- subset(nanosight_plus_sampleinfo_sem_outliers_concentracao, wave == "w1")
+nanosight_w2_sem_outliers_concentracao <- subset(nanosight_plus_sampleinfo_sem_outliers_concentracao, wave == "w2")
 
-
-descriptives_table_w2_mean <- descriptives(data = nanosight_w2_sem_outliers_mean, tamanho_mean_average, splitBy = "Trajetoria", ci = TRUE,
-                                           se = TRUE, variance = TRUE, mode = TRUE, desc = "rows")
-descriptives_table_w2_mean <- as.data.frame(descriptives_table_w2_mean$descriptivesT)
-descriptives_table_w2_mean[descriptives_table_w2_mean == "tamanho_mean_average"] <- "tamanho w2"
-salvar_tabela(descriptives_table_w2_mean, "tamanho_w2_descritivo.png")
-
-### %
-
-descriptives_table_w1_porc <- descriptives(data = nanosight_w1_sem_outliers_porcentagem, EV_pequenas_porcentagem, splitBy = "Trajetoria", ci = TRUE,
-                                           se = TRUE, variance = TRUE, mode = TRUE, desc = "rows")
-descriptives_table_w1_porc <- as.data.frame(descriptives_table_w1_porc$descriptivesT)
-descriptives_table_w1_porc[descriptives_table_w1_porc == "EV_pequenas_porcentagem"] <- "porcentagem EVs < 128.5 w1"
-salvar_tabela(descriptives_table_w1_porc, "porcentagem_w1_descritivo.png")
-
-
-descriptives_table_w2_porc <- descriptives(data = nanosight_w2_sem_outliers_porcentagem, EV_pequenas_porcentagem, splitBy = "Trajetoria", ci = TRUE,
-                                           se = TRUE, variance = TRUE, mode = TRUE, desc = "rows")
-descriptives_table_w2_porc <- as.data.frame(descriptives_table_w2_porc$descriptivesT)
-descriptives_table_w2_porc[descriptives_table_w2_porc == "EV_pequenas_porcentagem"] <- "porcentagem EVs < 128.5 w2"
-salvar_tabela(descriptives_table_w2_porc, "porcentagem_w2_descritivo.png")
-
-###conc 
-
-descriptives_table_w1_conc <- descriptives(data = nanosight_w1_sem_outliers_concentracao, concentracao_real, splitBy = "Trajetoria", ci = TRUE,
-                                           se = TRUE, variance = TRUE, mode = TRUE, desc = "rows")
-descriptives_table_w1_conc <- as.data.frame(descriptives_table_w1_conc$descriptivesT)
-descriptives_table_w1_conc[descriptives_table_w1_conc == "concentracao_real"] <- "Concentracao"
-salvar_tabela(descriptives_table_w1_conc, "conc_w1_descritivo.png")
-
-descriptives_table_w2_conc <- descriptives(data = nanosight_w2_sem_outliers_concentracao, concentracao_real, splitBy = "Trajetoria", ci = TRUE,
-                                           se = TRUE, variance = TRUE, mode = TRUE, desc = "rows")
-descriptives_table_w2_conc <- as.data.frame(descriptives_table_w2_conc$descriptivesT)
-descriptives_table_w2_conc[descriptives_table_w2_conc == "concentracao_real"] <- "Concentracao"
-salvar_tabela(descriptives_table_w2_conc, "conc_w2_descritivo.png")
 
 #Análise de Variância
 
@@ -116,12 +72,16 @@ shapiro_w1_porc <- shapiro_test(nanosight_w1_sem_outliers_porcentagem$EV_pequena
 shapiro_w2_porc <- shapiro_test(nanosight_w2_sem_outliers_porcentagem$EV_pequenas_porcentagem)
 shapiro_w1_conc <- shapiro_test(nanosight_w1_sem_outliers_concentracao$concentracao_real) #5.393e-09 
 shapiro_w2_conc <- shapiro_test(nanosight_w2_sem_outliers_concentracao$concentracao_real) #9.005e-08
+shapiro_tamanho <-  shapiro_test(nanosight_plus_sampleinfo_sem_outliers_mean$tamanho_mean_average) 
+shapiro_porc <-  shapiro_test(nanosight_plus_sampleinfo_sem_outliers_porcentagem$EV_pequenas_porcentagem)
+shapiro_conc <- shapiro_test(nanosight_plus_sampleinfo_sem_outliers_concentracao$concentracao_real)
 
 
-shapiro_table <- rbind(shapiro_w1_tamanho, shapiro_w1_porc, shapiro_w1_conc, shapiro_w2_tamanho, shapiro_w2_porc, shapiro_w2_conc)
-shapiro_table <- data.frame(dados, shapiro_table) [-2]
-shapiro_table <- mutate(shapiro_table, p.value = as.character(p.value))
-salvar_tabela(shapiro_table, "shapiro_waves.png")
+shapiro_table <- rbind(shapiro_w1_tamanho, shapiro_w1_porc, shapiro_w1_conc, shapiro_w2_tamanho, shapiro_w2_porc, shapiro_w2_conc, shapiro_tamanho, shapiro_porc, shapiro_conc)
+shapiro_dados <- c(dados, "shapiro_w1_w2_tamanho", "shapiro_w1_w2_porc", "shapiro_w1_w2_conc")
+shapiro_table <- data.frame(shapiro_dados, shapiro_table) [-2]
+shapiro_significante <- subset(shapiro_table, shapiro_table$p.value < 0.05)
+salvar_tabela(shapiro_table, "shapiro.png")
 
 
 
@@ -176,12 +136,14 @@ levene_w2_tamanho <- leveneTest(tamanho_mean_average ~ Trajetoria, data = nanosi
 levene_w1_porc <- leveneTest(EV_pequenas_porcentagem ~ Trajetoria, data = nanosight_w1_sem_outliers_porcentagem)
 levene_w2_porc <- leveneTest(EV_pequenas_porcentagem ~ Trajetoria, data = nanosight_w2_sem_outliers_porcentagem)
 levene_conc_batch <- leveneTest(concentracao_real ~ batch_nan, data = nanosight_plus_sampleinfo_sem_outliers_concentracao) #0.007
+levene_tamanho_batch <- leveneTest(tamanho_mean_average ~ batch_nan, data = nanosight_plus_sampleinfo_sem_outliers_mean) #0.002
+levene_porc_batch <- leveneTest(EV_pequenas_porcentagem ~ batch_nan, data = nanosight_plus_sampleinfo_sem_outliers_porcentagem) #9.891e-05
 levene_w1_conc <- leveneTest(concentracao_real ~ Trajetoria*batch_nan, data = nanosight_w1_sem_outliers_concentracao) #0.8
 levene_w2_conc <- leveneTest(concentracao_real ~ Trajetoria*batch_nan, data = nanosight_w2_sem_outliers_concentracao) #0.8
 
 
-levene_table <- rbind(levene_w1_tamanho, levene_w1_porc, levene_w1_conc, levene_w2_tamanho, levene_w2_porc, levene_w2_conc, levene_conc_batch)
-dados_levene <- c(dados, "levene_conc_batch")
+levene_table <- rbind(levene_w1_tamanho, levene_w1_porc, levene_w1_conc, levene_w2_tamanho, levene_w2_porc, levene_w2_conc, levene_conc_batch, levene_tamanho_batch, levene_porc_batch)
+dados_levene <- c(dados, "levene_conc_batch", "levene_tamanho_batch", "levene_porc_batch")
 dados_levene <- rep(dados_levene, each = 2)
 levene_table <- data.frame(dados_levene, levene_table)
 rownames(levene_table) <- NULL
@@ -196,9 +158,12 @@ salvar_tabela(levene_significante, "levene_significante.png")
 welch_w1_tamanho <- welch_anova_test(nanosight_w1_sem_outliers_mean, zscore_mean ~ Trajetoria)
 welch_w1_porc <- welch_anova_test(nanosight_w1_sem_outliers_porcentagem, zscore_porcentagem ~ Trajetoria)
 welch_conc_batch <-  welch_anova_test(nanosight_plus_sampleinfo_sem_outliers_concentracao, zscore_concentracao ~ batch_nan)
+welch_tamanho_batch <- welch_anova_test(nanosight_plus_sampleinfo_sem_outliers_mean, zscore_mean ~ batch_nan)
+welch_porc_batch <- welch_anova_test(nanosight_plus_sampleinfo_sem_outliers_porcentagem, zscore_porcentagem ~ batch_nan)
 
-welch_table <- rbind(welch_w1_tamanho, welch_w1_porc, welch_conc_batch)
-welch_table <- data.frame(dados_w1, welch_table) [-2]
+welch_table <- rbind(welch_w1_tamanho, welch_w1_porc, welch_conc_batch, welch_tamanho_batch, welch_porc_batch)
+dados_welch <- c(dados_w1[-3], "welch_conc_batch", "welch_tamanho_batch", "welch_porc_batch")
+welch_table <- data.frame(dados_welch, welch_table) [-2]
 
 welch_significante <- subset(welch_table, welch_table$p < 0.05)
 salvar_tabela(welch_significante, "welch_significante.png")
@@ -212,22 +177,26 @@ gh_w1_porc <- games_howell_test(nanosight_w1_sem_outliers_porcentagem, zscore_po
 gh_w1_porc[gh_w1_porc == "zscore_porcentagem"] <- "porcentagem EVs < 128.5 w1"
 gh_conc_batch <- games_howell_test(nanosight_plus_sampleinfo_sem_outliers_concentracao, zscore_concentracao ~ batch_nan)
 gh_conc_batch[gh_conc_batch == "zscore_concentracao"] <- "concentracao"
+gh_tamanho_batch <- games_howell_test(nanosight_plus_sampleinfo_sem_outliers_mean, zscore_mean ~ batch_nan)
+gh_porc_batch <- games_howell_test(nanosight_plus_sampleinfo_sem_outliers_porcentagem, zscore_porcentagem ~ batch_nan)
 
 
-gh_table <- rbind(gh_w1_tamanho, gh_w1_porc, gh_conc_batch)
+gh_table <- rbind(gh_w1_tamanho, gh_w1_porc, gh_conc_batch, gh_tamanho_batch, gh_porc_batch)
 gh_table_significante <- subset(gh_table, gh_table$p.adj.signif != "ns") [-8]
 names(gh_table_significante)[names(gh_table_significante) == ".y."] <- "dados"
 salvar_tabela(gh_table_significante, "gh_table_significante.png")
 
 ##ANOVA simples
 
-anova_w2_tamanho <- anova_test(nanosight_w2_sem_outliers_mean, zscore_mean ~ Trajetoria) 
-anova_w2_porc <- anova_test(nanosight_w2_sem_outliers_porcentagem, zscore_porcentagem ~ Trajetoria)
+anova_w1_tamanho <- anova_test(nanosight_w1_sem_outliers_mean, zscore_mean ~ Trajetoria*batch_nan) 
+anova_w1_porc <- anova_test(nanosight_w1_sem_outliers_porcentagem, zscore_porcentagem ~ Trajetoria*batch_nan)
+anova_w2_tamanho <- anova_test(nanosight_w2_sem_outliers_mean, zscore_mean ~ Trajetoria*batch_nan) 
+anova_w2_porc <- anova_test(nanosight_w2_sem_outliers_porcentagem, zscore_porcentagem ~ Trajetoria*batch_nan)
 anova_w1_conc <- anova_test(nanosight_w1_sem_outliers_concentracao, zscore_concentracao ~ Trajetoria*batch_nan) #significante 
 anova_w2_conc <- anova_test(nanosight_w2_sem_outliers_concentracao, zscore_concentracao ~ Trajetoria*batch_nan) #significante
 
-anova_table <- rbind(anova_w2_tamanho, anova_w2_porc, anova_w2_conc, anova_w1_conc)
-dados_anova <- c(dados_w2, rep("concentracao w2", each = 2), rep("concentracao w1", each = 3))
+anova_table <- rbind(anova_w1_tamanho, anova_w1_porc, anova_w1_conc, anova_w2_tamanho, anova_w2_porc, anova_w2_conc)
+dados_anova <- rep(dados, each=3)
 anova_table <- data.frame(dados_anova, anova_table)
 
 anova_table_significante <- subset(anova_table, anova_table$p..05 != "") [-7]
@@ -236,12 +205,16 @@ anova_table_significante <- subset(anova_table, anova_table$p..05 != "") [-7]
 
 ###Post-hoc Tukey concentracao w1 e w2 (porc e tamanho na w2 nao deu significante)
 
+tukey_w1_tamanho <- tukey_hsd(nanosight_w1_sem_outliers_mean, zscore_mean ~ Trajetoria*batch_nan)
+tukey_w1_tamanho <- cbind(dados = "tamanho w1", tukey_w1_tamanho)
+tukey_w1_porc <- tukey_hsd(nanosight_w1_sem_outliers_porcentagem, zscore_porcentagem ~ Trajetoria*batch_nan)
+tukey_w1_porc <- cbind(dados = "porcentagem w1", tukey_w1_porc)
 tukey_w1_conc <- tukey_hsd(nanosight_w1_sem_outliers_concentracao, zscore_concentracao ~ Trajetoria*batch_nan)
 tukey_w1_conc <- cbind(dados = "concentracao w1", tukey_w1_conc)
 tukey_w2_conc <- tukey_hsd(nanosight_w2_sem_outliers_concentracao, zscore_concentracao ~ Trajetoria*batch_nan)
 tukey_w2_conc <- cbind(dados = "concentracao w2", tukey_w2_conc)
 
-tukey_table <- rbind(tukey_w1_conc, tukey_w2_conc)
+tukey_table <- rbind(tukey_w1_tamanho, tukey_w1_porc, tukey_w1_conc, tukey_w2_conc)
 tukey_table_significante <- subset(tukey_table, tukey_table$p.adj.signif != "ns") [-10]
 
 
@@ -265,7 +238,7 @@ nanosight_pares_conc$batch_nan <- factor(nanosight_pares_conc$batch_nan, levels 
 
 ###para % 
 
-anova_rm_porc <- anova_test(nanosight_pares_porc, dv = zscore_porcentagem, wid = subjectid, within = wave, between = Trajetoria)
+anova_rm_porc <- anova_test(nanosight_pares_porc, dv = zscore_porcentagem, wid = subjectid, within = wave, between = c(Trajetoria, batch_nan))
 anova_rm_porc <- as.data.frame(get_anova_table(anova_rm_porc, correction = "auto"))
 anova_rm_porc <- cbind("porcentagem EVs < 128.5", anova_rm_porc)
 names(anova_rm_porc)[names(anova_rm_porc) == "\"porcentagem EVs < 128.5\""] <- "dados"
@@ -274,7 +247,7 @@ salvar_tabela(anova_rm_porc_significante, "anova_rm_porc_significante.png")
 
 ###para tamanho (somente ANOVA, sem montar tabela final de resultado pq n deu significante)
 
-anova_rm_tamanho <- anova_test(nanosight_pares_tamanho, dv = zscore_mean, wid = subjectid, within = wave, between = Trajetoria)
+anova_rm_tamanho <- anova_test(nanosight_pares_tamanho, dv = zscore_mean, wid = subjectid, within = wave, between = c(Trajetoria, batch_nan))
 anova_rm_tamanho <- get_anova_table(anova_rm_tamanho, correction = "auto")
 
 ##para conc (tabela com significante, unica significancia foi da interacao batch e trajetoria)
@@ -288,7 +261,7 @@ anova_rm_conc_significante <- subset(anova_rm_conc, anova_rm_conc$`p<.05` != "")
 
 ###post hoc anova rm % (anova deu significante. OBS: Para conc n fiz, pq se o efeito de interesse nao deu significante, nao vou olhar o outro) 
 
-scheffe <- ScheffeTest(zscore_porcentagem ~ Trajetoria*wave, subset = FALSE, data = nanosight_pares_porc, na.action = getOption("echo"))
+scheffe <- ScheffeTest(zscore_porcentagem ~ Trajetoria*wave+batch_nan, subset = FALSE, data = nanosight_pares_porc, na.action = getOption("echo")) #sem int: B-A significante; com interacao: nao significante
 scheffe_traj_porc <- as.data.frame(scheffe[[1]]) 
 scheffe_wave_porc <- as.data.frame(scheffe[[2]]) 
 scheffe_wave_traj_porc <- as.data.frame(scheffe[[3]])
@@ -303,11 +276,13 @@ salvar_tabela(scheffe_table_porc_significante, "scheffe_table_porc_significante.
 
 #### KW com post-hoc DSCF
 
-kw_dscf_tamanho_w1 <- anovaNP(formula = tamanho_mean_average ~ Trajetoria, data = nanosight_w1_sem_outliers_mean, es = TRUE, pairs = TRUE)
-kw_dscf_tamanho_w2 <- anovaNP(formula = tamanho_mean_average ~ Trajetoria, data = nanosight_w2_sem_outliers_mean, es = TRUE, pairs = TRUE)
-kw_dscf_porc_w1 <- anovaNP(data = nanosight_w1_sem_outliers_porcentagem, formula = EV_pequenas_porcentagem~Trajetoria, es = TRUE, pairs = TRUE) 
-kw_dscf_porc_w2 <- anovaNP(data = nanosight_w2_sem_outliers_porcentagem, formula = EV_pequenas_porcentagem~Trajetoria, es = TRUE, pairs = TRUE) 
+kw_dscf_tamanho_w1 <- anovaNP(formula = tamanho_mean_average ~ Trajetoria*batch_nan, data = nanosight_w1_sem_outliers_mean, es = TRUE, pairs = TRUE)
+kw_dscf_tamanho_w2 <- anovaNP(formula = tamanho_mean_average ~ Trajetoria*batch_nan, data = nanosight_w2_sem_outliers_mean, es = TRUE, pairs = TRUE)
+kw_dscf_porc_w1 <- anovaNP(data = nanosight_w1_sem_outliers_porcentagem, formula = EV_pequenas_porcentagem~Trajetoria*batch_nan, es = TRUE, pairs = TRUE) 
+kw_dscf_porc_w2 <- anovaNP(data = nanosight_w2_sem_outliers_porcentagem, formula = EV_pequenas_porcentagem~Trajetoria*batch_nan, es = TRUE, pairs = TRUE) 
 kw_dscf_conc_batch <- anovaNP(data = nanosight_plus_sampleinfo_sem_outliers_concentracao, formula = concentracao_real~batch_nan, es = TRUE, pairs = TRUE) 
+kw_dscf_tamanho_batch <- anovaNP(data = nanosight_plus_sampleinfo_sem_outliers_mean, formula = tamanho_mean_average~batch_nan, es = TRUE, pairs = TRUE) 
+kw_dscf_porc_batch <- anovaNP(data = nanosight_plus_sampleinfo_sem_outliers_porcentagem, formula = EV_pequenas_porcentagem~batch_nan, es = TRUE, pairs = TRUE) 
 kw_dscf_conc_w1 <- anovaNP(data = nanosight_w1_sem_outliers_concentracao, formula = concentracao_real~Trajetoria*batch_nan, es = TRUE, pairs = TRUE) 
 kw_dscf_conc_w2 <- anovaNP(data = nanosight_w2_sem_outliers_concentracao, formula = concentracao_real~Trajetoria*batch_nan, es = TRUE, pairs = TRUE) 
 
@@ -318,35 +293,36 @@ kw_jmv_tamanho_w2 <- as.data.frame(kw_dscf_tamanho_w2$table)
 kw_jmv_porc_w1 <- as.data.frame(kw_dscf_porc_w1$table)
 kw_jmv_porc_w2 <- as.data.frame(kw_dscf_porc_w2$table)
 kw_jmv_conc_batch <- as.data.frame(kw_dscf_conc_batch$table)
+kw_jmv_tamanho_batch <- as.data.frame(kw_dscf_tamanho_batch$table)
+kw_jmv_porc_batch <- as.data.frame(kw_dscf_porc_batch$table)
 kw_jmv_conc_w1 <- as.data.frame(kw_dscf_conc_w1$table) #significante
 kw_jmv_conc_w2 <- as.data.frame(kw_dscf_conc_w2$table) #significante
 
-kw_jmv_table <- rbind(kw_jmv_tamanho_w1, kw_jmv_porc_w1, kw_jmv_conc_w1, kw_jmv_tamanho_w2, kw_jmv_porc_w2, kw_jmv_conc_w2, kw_jmv_conc_batch)
-dados_kw_jmv <- c(dados, "concentracaoxbatch")
+kw_jmv_table <- rbind(kw_jmv_tamanho_w1, kw_jmv_porc_w1, kw_jmv_conc_w1, kw_jmv_tamanho_w2, kw_jmv_porc_w2, kw_jmv_conc_w2, kw_jmv_conc_batch, kw_jmv_tamanho_batch, kw_jmv_porc_batch)
+dados_kw_jmv <- c(dados, "concentracaoxbatch", "tamanhoxbatch", "porcxbatch")
 kw_jmv_table <- cbind(dados_kw_jmv, kw_jmv_table) [-2]
 kw_jmv_significante <- subset(kw_jmv_table, kw_jmv_table$p < 0.05)
 row.names(kw_jmv_significante) <- NULL
-salvar_tabela(kw_jmv_significante, "kw_jmv_significante")
+salvar_tabela(kw_jmv_significante, "kw_jmv_significante.png")
 
-#####DSCF
+#####DSCF (so para kw significante)
 dscf_tamanho_w1 <- as.data.frame(kw_dscf_tamanho_w1$comparisons[[1]])
 dscf_tamanho_w1 <- cbind(dados = "tamanho w1", dscf_tamanho_w1)
-dscf_tamanho_w2 <- as.data.frame(kw_dscf_tamanho_w2$comparisons[[1]])
-dscf_tamanho_w2 <- cbind(dados = "tamanho w2", dscf_tamanho_w2)
 dscf_porc_w1 <- as.data.frame(kw_dscf_porc_w1$comparisons[[1]])
 dscf_porc_w1 <- cbind(dados = "porcentagem EVs < 128.5 w1", dscf_porc_w1)
-dscf_porc_w2 <- as.data.frame(kw_dscf_porc_w2$comparisons[[1]])
-dscf_porc_w2 <- cbind(dados = "porcentagem EVs < 128.5 w2", dscf_porc_w2)
 dscf_conc_batch <- as.data.frame(kw_dscf_conc_batch$comparisons[[1]])
 dscf_conc_batch <- cbind(dados = "concentracaoxbatch", dscf_conc_batch)
+dscf_tamanho_batch <- as.data.frame(kw_dscf_tamanho_batch$comparisons[[1]])
+dscf_tamanho_batch <- cbind(dados = "tamanhoxbatch", dscf_tamanho_batch)
+dscf_porc_batch <- as.data.frame(kw_dscf_porc_batch$comparisons[[1]])
+dscf_porc_batch <- cbind(dados = "porcentagemxbatch", dscf_porc_batch)
 dscf_conc_w1 <- as.data.frame(kw_dscf_conc_w1$comparisons[[1]])
 dscf_conc_w1 <- cbind(dados = "concentracao w1", dscf_conc_w1)
 dscf_conc_w2 <- as.data.frame(kw_dscf_conc_w2$comparisons[[1]])
 dscf_conc_w2 <- cbind(dados = "concentracao w2", dscf_conc_w2)
 
 
-dscf_table <- rbind(dscf_tamanho_w1, dscf_porc_w1, dscf_conc_w1, dscf_tamanho_w2, dscf_porc_w2, dscf_conc_w2, dscf_conc_batch)
+dscf_table <- rbind(dscf_tamanho_w1, dscf_porc_w1, dscf_conc_w1, dscf_conc_w2, dscf_conc_batch, dscf_tamanho_batch, dscf_porc_batch)
 dscf_significante <- subset(dscf_table, dscf_table$p < 0.05)
 row.names(dscf_significante) <- NULL
 salvar_tabela(dscf_significante, "dscf_significante.png")
-
