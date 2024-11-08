@@ -90,14 +90,6 @@ write.csv(nanosight_plus_sampleinfo, "nanosight_plus_sampleinfo_all.csv", row.na
 ##Amostras sem análise no Nanosight
 sample_info_sem_nanosight <- anti_join(sample_information, nanosight_sem_duplicatas, by="id_sample")
 
-##Acrescentando coluna com e sem Transtorno Psiquiátrico (TP_transversal)
-nanosight_plus_sampleinfo <- mutate(nanosight_plus_sampleinfo, 
-                                    TP_transversal = ifelse(Grupo %in% c("A_w1", "B_w1", "A_w2", "C_w2"), "caso",
-                                                ifelse(Grupo %in% c("C_w1", "D_w1", "B_w2", "D_w2"), "controle", NA)))
-##Acrescentando coluna de quem nunca teve TP e de quem já teve em algum momento da vida (TP_longitudinal)
-nanosight_plus_sampleinfo <- mutate(nanosight_plus_sampleinfo,
-                                    TP_longitudinal = ifelse(Trajetoria %in% c("A"), "caso",
-                                                             ifelse(Trajetoria %in% c("B", "C", "D"), "controle", NA)))
 #Retirar coluna que nao interessa (bage)
 nanosight_plus_sampleinfo <- nanosight_plus_sampleinfo[,-12]
 #Para analise de Levene as colunas de transtornos não podem ser numeros, portanto (F=False T=True)
@@ -112,6 +104,14 @@ nanosight_plus_sampleinfo <- nanosight_plus_sampleinfo %>%
     dcmania = ifelse(dcmania == 0, "F", "T"),
     dcptsd = ifelse(dcptsd == 0, "F", "T")
   )
+#Nomeando as trajetórias para deixar menos confuso
+nanosight_plus_sampleinfo <- nanosight_plus_sampleinfo %>%
+  mutate(Trajetoria = case_when(
+    Trajetoria == "A" ~ "Control",
+    Trajetoria == "B" ~ "Incidence",
+    Trajetoria == "C" ~ "Remission",
+    Trajetoria == "D" ~ "Persistence"
+  ))
 ##Retirando outliers
 nanosight_plus_sampleinfo$zscore_mean <- scale(nanosight_plus_sampleinfo$tamanho_mean_average)
 nanosight_plus_sampleinfo_sem_outliers_mean <- nanosight_plus_sampleinfo[nanosight_plus_sampleinfo$zscore_mean >= -3.0 & nanosight_plus_sampleinfo$zscore_mean <= 3.0, ]
@@ -119,21 +119,50 @@ nanosight_plus_sampleinfo$zscore_porcentagem <- scale(nanosight_plus_sampleinfo$
 nanosight_plus_sampleinfo_sem_outliers_porcentagem <- nanosight_plus_sampleinfo[nanosight_plus_sampleinfo$zscore_porcentagem >= -3.0 & nanosight_plus_sampleinfo$zscore_porcentagem <= 3.0, ]
 nanosight_plus_sampleinfo$zscore_concentracao <- scale(nanosight_plus_sampleinfo$concentracao_real)
 nanosight_plus_sampleinfo_sem_outliers_concentracao <- nanosight_plus_sampleinfo[nanosight_plus_sampleinfo$zscore_concentracao >= -3.0 & nanosight_plus_sampleinfo$zscore_concentracao <= 3.0, ]
-nanosight_outliers <- anti_join(nanosight_plus_sampleinfo, nanosight_plus_sampleinfo_sem_outliers_mean, by = c("id_sample"))
+nanosight_plus_sampleinfo_sem_outliers_mean_concentracao <- inner_join(nanosight_plus_sampleinfo_sem_outliers_mean, nanosight_plus_sampleinfo_sem_outliers_concentracao, by = ("id_sample"))
+nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao <- inner_join(nanosight_plus_sampleinfo_sem_outliers_porcentagem, nanosight_plus_sampleinfo_sem_outliers_concentracao, by = ("id_sample"))
 
 ##Tabela só com w1 e só w2
-nanosight_w1_sem_outliers_mean <- subset(nanosight_plus_sampleinfo_sem_outliers_mean, wave == "w1")
-nanosight_w2_sem_outliers_mean <- subset(nanosight_plus_sampleinfo_sem_outliers_mean, wave == "w2")
-nanosight_w1_sem_outliers_porcentagem <- subset(nanosight_plus_sampleinfo_sem_outliers_porcentagem, wave == "w1")
-nanosight_w2_sem_outliers_porcentagem <- subset(nanosight_plus_sampleinfo_sem_outliers_porcentagem, wave == "w2")
-nanosight_w1_sem_outliers_concentracao <- subset(nanosight_plus_sampleinfo_sem_outliers_concentracao, wave == "w1")
-nanosight_w2_sem_outliers_concentracao <- subset(nanosight_plus_sampleinfo_sem_outliers_concentracao, wave == "w2")
+nanosight_w1 <- subset(nanosight_plus_sampleinfo, wave == "w1")
+nanosight_w2 <- subset(nanosight_plus_sampleinfo, wave == "w2")
+nanosight_sem_outliers_mean_w1 <- subset(nanosight_plus_sampleinfo_sem_outliers_mean, wave == "w1")
+nanosight_sem_outliers_mean_w2 <- subset(nanosight_plus_sampleinfo_sem_outliers_mean, wave == "w2")
+nanosight_sem_outliers_porcentagem_w1 <- subset(nanosight_plus_sampleinfo_sem_outliers_porcentagem, wave == "w1")
+nanosight_sem_outliers_porcentagem_w2 <- subset(nanosight_plus_sampleinfo_sem_outliers_porcentagem, wave == "w2")
+nanosight_sem_outliers_concentracao_w1 <- subset(nanosight_plus_sampleinfo_sem_outliers_concentracao, wave == "w1")
+nanosight_sem_outliers_concentracao_w2 <- subset(nanosight_plus_sampleinfo_sem_outliers_concentracao, wave == "w2")
+nanosight_plus_sampleinfo_sem_outliers_mean_concentracao_w1 <- subset(nanosight_plus_sampleinfo_sem_outliers_mean_concentracao, wave.x == "w1")
+nanosight_plus_sampleinfo_sem_outliers_mean_concentracao_w2 <- subset(nanosight_plus_sampleinfo_sem_outliers_mean_concentracao, wave.x == "w2")
+nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao_w1 <- subset(nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao, wave.x == "w1")
+nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao_w2 <- subset(nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao, wave.x == "w2")
+
+##Outliers
+nanosight_outliers_mean_w1 <- anti_join(nanosight_w1, nanosight_sem_outliers_mean_w1, by = "id_sample")
+nanosight_outliers_mean_w2 <- anti_join(nanosight_w2, nanosight_sem_outliers_mean_w2, by = "id_sample")
+nanosight_outliers_porcentagem_w1 <- anti_join(nanosight_w1, nanosight_sem_outliers_porcentagem_w1, by = "id_sample")
+nanosight_outliers_porcentagem_w2 <- anti_join(nanosight_w2, nanosight_sem_outliers_porcentagem_w2, by = "id_sample")
+nanosight_outliers_concentracao_w1 <- anti_join(nanosight_w1, nanosight_sem_outliers_concentracao_w1, by = "id_sample")
+nanosight_outliers_concentracao_w2 <- anti_join(nanosight_w2, nanosight_sem_outliers_concentracao_w2, by = "id_sample")
 
 ##Amostras sem pares
 linhas_sem_pares <- !duplicated(nanosight_plus_sampleinfo$subjectid) & !duplicated(nanosight_plus_sampleinfo$subjectid, fromLast = TRUE)
 nanosight_sem_pares <- nanosight_plus_sampleinfo[linhas_sem_pares, ] #perde 7
-
 ##Amostras com pares sem outliers
 nanosight_plus_sampleinfo_pares <- anti_join(nanosight_plus_sampleinfo, nanosight_sem_pares, by = "id_sample")
-nanosight_plus_sampleinfo_pares_sem_outliers <- anti_join(nanosight_plus_sampleinfo_pares, nanosight_outliers, by = "id_sample")
+
+#Contagem de indivíduos com diferentes transtornos:
+##w1
+variaveis_w1 <- nanosight_w1 %>% 
+  select(dcany, dcmadep, dcanyanx, dcgena, dcanyhk, dcpsych, dcmania, dcptsd)
+variaveis_w1_combinacao <- as.data.frame(rowSums(variaveis == "T"))
+combinacoes_w1_frequencias <- variaveis_w1 %>%
+  group_by(across(everything())) %>%
+  summarise(Frequencia = n(), .groups = "drop")
+##w2
+variaveis_w2 <- nanosight_w2 %>% 
+  select(dcany, dcmadep, dcanyanx, dcgena, dcanyhk, dcpsych, dcmania, dcptsd)
+variaveis_w2_combinacao <- as.data.frame(rowSums(variaveis == "T"))
+combinacoes_w2_frequencias <- variaveis %>%
+  group_by(across(everything())) %>%
+  summarise(Frequencia = n(), .groups = "drop")
 

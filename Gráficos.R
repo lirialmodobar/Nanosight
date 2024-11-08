@@ -4,16 +4,18 @@ library(ggpubr)
 library(Hmisc)
 
 #Definir pasta de trabalho e importar scripts necessários
+
 setwd("C:/Users/Belle/Documents/Belle - Nanosight")
 
 #Graficos IMPORTANTES
 
 # Gráfico de dispersão de concentração vs. tamanho, colorido por Grupo
-ggplot(nanosight_plus_sampleinfo, aes(x = tamanho_mean_average, y = concentracao_real, color = Trajetoria)) +
+ggplot(nanosight_plus_sampleinfo_sem_outliers_mean_concentracao_w1, aes(x = tamanho_mean_average.x, y = concentracao_real.x, color = Trajetoria.x)) +
   geom_point(size = 3, alpha = 0.7) +  # Pontinhos com tamanho e transparência ajustados
-  labs(title = "Gráfico de Dispersão: Concentração vs. Tamanho", 
-       x = "Tamanho Médio (nm)", 
-       y = "Concentração (partículas/ml)") +
+  labs(title = "Scatter Plot: Concentration vs. Mean Size for w1", 
+       x = "Mean Size (nm)", 
+       y = "Concentration (particles/ml)",
+       color = "Trajectory") +
   theme_minimal() +
   theme(
     text = element_text(size = 16),  # Ajuste do tamanho da fonte geral
@@ -23,10 +25,70 @@ ggplot(nanosight_plus_sampleinfo, aes(x = tamanho_mean_average, y = concentracao
     legend.text = element_text(size = 14),  # Tamanho da fonte da legenda
     legend.title = element_text(size = 16)  # Tamanho do título da legenda
   ) +
-  scale_color_manual(values = c("A" = "#0f8bf7", "B" = "#f7830f", "C" = "#ff12d0", "D" = "#2a8008")) + # Cores para os grupos
+  scale_color_manual(values = c("Control" = "#0f8bf7", "Incidence" = "#f7830f", "Remission" = "#ff12d0", "Persistence" = "#2a8008")) + # Cores para os grupos
   scale_y_log10() 
 #Salvar
-ggsave("plots/dispersao_concentracao_tamanho.pdf", width = 8, height = 6)
+ggsave("plots/dispersao_concentracao_tamanho_w1.pdf", width = 8, height = 6)
+# Gráfico de dispersão de concentração vs. tamanho, colorido por Grupo
+ggplot(nanosight_plus_sampleinfo_sem_outliers_mean_concentracao_w2, aes(x = tamanho_mean_average.x, y = concentracao_real.x, color = Trajetoria.x)) +
+  geom_point(size = 3, alpha = 0.7) +  # Pontinhos com tamanho e transparência ajustados
+  labs(title = "Scatter Plot: Concentration vs. Mean Size for w2", 
+       x = "Mean Size (nm)", 
+       y = "Concentration (particles/ml)",
+       color = "Trajectory") +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 16),  # Ajuste do tamanho da fonte geral
+    axis.text = element_text(size = 14),  # Tamanho da fonte dos textos dos eixos
+    axis.title = element_text(size = 16),  # Tamanho da fonte dos títulos dos eixos
+    plot.title = element_text(size = 18, hjust = 0.5),  # Tamanho e alinhamento centralizado do título
+    legend.text = element_text(size = 14),  # Tamanho da fonte da legenda
+    legend.title = element_text(size = 16)  # Tamanho do título da legenda
+  ) +
+  scale_color_manual(values = c("Control" = "#0f8bf7", "Incidence" = "#f7830f", "Remission" = "#ff12d0", "Persistence" = "#2a8008")) + # Cores para os grupos
+  scale_y_log10() 
+#Salvar
+ggsave("plots/dispersao_concentracao_tamanho_w2.pdf", width = 8, height = 6)
+# Gráfico de dispersão de concentração vs. porcentagem, colorido por Grupo
+ggplot(nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao_w1, aes(x = EV_pequenas_porcentagem.x, y = concentracao_real.x, color = Trajetoria.x)) +
+  geom_point(size = 3, alpha = 0.7) +  # Pontinhos com tamanho e transparência ajustados
+  labs(title = "Scatter Plot: Concentration vs. Percentage of Small EVs for w1 (≤ 128.5 nm)", 
+       x = "Percentage of Small EVs for w1 (%)", 
+       y = "Concentration (particles/ml)",
+       color = "Trajectory") +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 16),  # Ajuste do tamanho da fonte geral
+    axis.text = element_text(size = 14),  # Tamanho da fonte dos textos dos eixos
+    axis.title = element_text(size = 16),  # Tamanho da fonte dos títulos dos eixos
+    plot.title = element_text(size = 18, hjust = 0.5),  # Tamanho e alinhamento centralizado do título
+    legend.text = element_text(size = 14),  # Tamanho da fonte da legenda
+    legend.title = element_text(size = 16)  # Tamanho do título da legenda
+  ) +
+  scale_color_manual(values = c("Control" = "#0f8bf7", "Incidence" = "#f7830f", "Remission" = "#ff12d0", "Persistence" = "#2a8008")) + # Cores para os grupos
+  scale_y_log10() 
+#Salvar
+ggsave("plots/dispersao_concentracao_porcentagem_w1.pdf", width = 8, height = 6)
+# Gráfico de dispersão de concentração vs. porcentagem, colorido por Grupo
+ggplot(nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao_w2, aes(x = EV_pequenas_porcentagem.x, y = concentracao_real.x, color = Trajetoria.x)) +
+  geom_point(size = 3, alpha = 0.7) +  # Pontinhos com tamanho e transparência ajustados
+  labs(title = "Scatter Plot: Concentration vs. Percentage of Small EVs for w2 (≤ 128.5 nm)", 
+       x = "Percentage of Small EVs for w2 (%)", 
+       y = "Concentration (particles/ml)",
+       color = "Trajectory") +
+  theme_minimal() +
+  theme(
+    text = element_text(size = 16),  # Ajuste do tamanho da fonte geral
+    axis.text = element_text(size = 14),  # Tamanho da fonte dos textos dos eixos
+    axis.title = element_text(size = 16),  # Tamanho da fonte dos títulos dos eixos
+    plot.title = element_text(size = 18, hjust = 0.5),  # Tamanho e alinhamento centralizado do título
+    legend.text = element_text(size = 14),  # Tamanho da fonte da legenda
+    legend.title = element_text(size = 16)  # Tamanho do título da legenda
+  ) +
+  scale_color_manual(values = c("Control" = "#0f8bf7", "Incidence" = "#f7830f", "Remission" = "#ff12d0", "Persistence" = "#2a8008")) + # Cores para os grupos
+  scale_y_log10() 
+#Salvar
+ggsave("plots/dispersao_concentracao_porcentagem_w2.pdf", width = 8, height = 6)
 
 #Boxplot Jitter da distribuição da média dos tamanhos nas Trajetorias
 ##Todas as amostras
@@ -140,6 +202,38 @@ ggplot(nanosight_plus_sampleinfo, aes(x = batch_nan, y = concentracao_real, fill
   scale_y_log10()  # Aplica escala logarítmica no eixo Y
 #Salvar
 ggsave("plots/boxplot_com_jitter_batch_concentracao_trajetoria.pdf", width = 8, height = 6)
+
+###Gráfico de Comparações Múltiplas
+ggplot(summary_table_dunn_mean_w1, aes(x = comparisons, y = P.adjusted, fill = P.adjusted < 0.05)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Dunn Tests: Multiple Comparisons for Mean - w1")
+ggsave("plots/dunn_plot_mean_w1.pdf", width = 12, height = 6)
+ggplot(summary_table_dunn_mean_w2, aes(x = comparisons, y = P.adjusted, fill = P.adjusted < 0.05)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Dunn Tests: Multiple Comparisons for Mean - w2")
+ggsave("plots/dunn_plot_mean_w2.pdf", width = 12, height = 6)
+ggplot(summary_table_dunn_porcentagem_w1, aes(x = comparisons, y = P.adjusted, fill = P.adjusted < 0.05)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Dunn Tests: Multiple Comparisons for Percentage of small EVs - w1")
+ggsave("plots/dunn_plot_porcentagem_w1.pdf", width = 12, height = 6)
+ggplot(summary_table_dunn_porcentagem_w2, aes(x = comparisons, y = P.adjusted, fill = P.adjusted < 0.05)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Dunn Tests: Multiple Comparisons for Percentage of small EVs - w2")
+ggsave("plots/dunn_plot_porcentagem_w2.pdf", width = 12, height = 6)
+ggplot(summary_table_dunn_concentracao_w1, aes(x = comparisons, y = P.adjusted, fill = P.adjusted < 0.05)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Dunn Tests: Multiple Comparisons for Concentration of Particles - w1")
+ggsave("plots/dunn_plot_concentracao_w1.pdf", width = 12, height = 6)
+ggplot(summary_table_dunn_concentracao_w2, aes(x = comparisons, y = P.adjusted, fill = P.adjusted < 0.05)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Dunn Tests: Multiple Comparisons for Concentration of Particles - w2")
+ggsave("plots/dunn_plot_concentracao_w2.pdf", width = 12, height = 6)
 
 ### Outras opções de gráficos para visualizar as médias (Welch ANOVA) ####
 
