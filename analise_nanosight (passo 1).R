@@ -72,12 +72,13 @@ batch_nan <- batch_nan %>%
   mutate(batch_nan = case_when(
     batch_nan %in% c(1, 13) ~ "B",  # Agrupar 1 e 13 para B
     batch_nan == 2 ~ "J",           # Agrupar 2 para J
-    batch_nan %in% c(3:12, 14:22) ~ "I",  # Agrupar 3 a 12 e 14 a 22 para I
+    batch_nan %in% c(4, 5, 9, 14, 20, 21) ~ "I1",
+    batch_nan %in% c(3, 6, 7, 8, 10, 11, 12, 15, 16, 17, 18, 19, 22) ~ "I2",
     TRUE ~ as.character(batch_nan)  # Manter os outros números como estão
   )) #Jess, Belle e ICESP
 ##Juntando todos os dados obtidos do nanosight em uma tabela
-tabela_tudo_nanosight <- data.frame(id_sample, diluicao, concentracao_real, tamanho_mean_average, EV_pequenas_porcentagem, batch_nan, tamanho_mode_average)
-colnames(tabela_tudo_nanosight)[2] <- "diluicao"
+tabela_tudo_nanosight <- data.frame(id_sample, concentracao_average, diluicao, concentracao_real, tamanho_mean_average, EV_pequenas_porcentagem, batch_nan, tamanho_mode_average)
+colnames(tabela_tudo_nanosight)[3] <- "diluicao"
 duplicatas <- duplicated(tabela_tudo_nanosight[, c("id_sample")], fromLast = TRUE) #a 2a leitura é a correta
 nanosight_sem_duplicatas <- subset(tabela_tudo_nanosight, !duplicatas)
 ##Juntar dados do nanosight com informações da amostra
@@ -119,8 +120,9 @@ nanosight_plus_sampleinfo$zscore_porcentagem <- scale(nanosight_plus_sampleinfo$
 nanosight_plus_sampleinfo_sem_outliers_porcentagem <- nanosight_plus_sampleinfo[nanosight_plus_sampleinfo$zscore_porcentagem >= -3.0 & nanosight_plus_sampleinfo$zscore_porcentagem <= 3.0, ]
 nanosight_plus_sampleinfo$zscore_concentracao <- scale(nanosight_plus_sampleinfo$concentracao_real)
 nanosight_plus_sampleinfo_sem_outliers_concentracao <- nanosight_plus_sampleinfo[nanosight_plus_sampleinfo$zscore_concentracao >= -3.0 & nanosight_plus_sampleinfo$zscore_concentracao <= 3.0, ]
-nanosight_plus_sampleinfo_sem_outliers_mean_concentracao <- inner_join(nanosight_plus_sampleinfo_sem_outliers_mean, nanosight_plus_sampleinfo_sem_outliers_concentracao, by = ("id_sample"))
-nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao <- inner_join(nanosight_plus_sampleinfo_sem_outliers_porcentagem, nanosight_plus_sampleinfo_sem_outliers_concentracao, by = ("id_sample"))
+nanosight_plus_sampleinfo_sem_outliers_mean_concentracao <- semi_join(nanosight_plus_sampleinfo_sem_outliers_mean, nanosight_plus_sampleinfo_sem_outliers_concentracao, by = "id_sample")
+nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao <- semi_join(nanosight_plus_sampleinfo_sem_outliers_porcentagem, nanosight_plus_sampleinfo_sem_outliers_concentracao, by = ("id_sample"))
+nanosight_intersect <- semi_join(nanosight_plus_sampleinfo_sem_outliers_mean_concentracao, nanosight_plus_sampleinfo_sem_outliers_porcentagem, by = ("id_sample"))
 
 ##Tabela só com w1 e só w2
 nanosight_w1 <- subset(nanosight_plus_sampleinfo, wave == "w1")
@@ -131,18 +133,27 @@ nanosight_sem_outliers_porcentagem_w1 <- subset(nanosight_plus_sampleinfo_sem_ou
 nanosight_sem_outliers_porcentagem_w2 <- subset(nanosight_plus_sampleinfo_sem_outliers_porcentagem, wave == "w2")
 nanosight_sem_outliers_concentracao_w1 <- subset(nanosight_plus_sampleinfo_sem_outliers_concentracao, wave == "w1")
 nanosight_sem_outliers_concentracao_w2 <- subset(nanosight_plus_sampleinfo_sem_outliers_concentracao, wave == "w2")
-nanosight_plus_sampleinfo_sem_outliers_mean_concentracao_w1 <- subset(nanosight_plus_sampleinfo_sem_outliers_mean_concentracao, wave.x == "w1")
-nanosight_plus_sampleinfo_sem_outliers_mean_concentracao_w2 <- subset(nanosight_plus_sampleinfo_sem_outliers_mean_concentracao, wave.x == "w2")
-nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao_w1 <- subset(nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao, wave.x == "w1")
-nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao_w2 <- subset(nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao, wave.x == "w2")
+nanosight_plus_sampleinfo_sem_outliers_mean_concentracao_w1 <- subset(nanosight_plus_sampleinfo_sem_outliers_mean_concentracao, wave == "w1")
+nanosight_plus_sampleinfo_sem_outliers_mean_concentracao_w2 <- subset(nanosight_plus_sampleinfo_sem_outliers_mean_concentracao, wave == "w2")
+nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao_w1 <- subset(nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao, wave == "w1")
+nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao_w2 <- subset(nanosight_plus_sampleinfo_sem_outliers_porcentagem_concentracao, wave == "w2")
+nanosight_intersect_w1 <- subset(nanosight_intersect, wave == "w1")
+nanosight_intersect_w2 <- subset(nanosight_intersect, wave == "w2")
+
+#Tabela de cada batch_nan
+nanosight_batch_b <- subset(nanosight_plus_sampleinfo, batch_nan == "B")
+nanosight_batch_i1 <- subset(nanosight_plus_sampleinfo, batch_nan == "I1")
+nanosight_batch_i2 <- subset(nanosight_plus_sampleinfo, batch_nan == "I2")
+nanosight_batch_j <- subset(nanosight_plus_sampleinfo, batch_nan == "J")
+
+#Tabela sem o batch_nan_i1
+nanosight_batch_b_i2_j <- subset(nanosight_plus_sampleinfo, batch_nan != "I1")
+
+#tabela considerando o batch I como um todo
+nanosight_batch_i <- subset(nanosight_plus_sampleinfo, batch_nan %in% c("I1", "I2"))
 
 ##Outliers
-nanosight_outliers_mean_w1 <- anti_join(nanosight_w1, nanosight_sem_outliers_mean_w1, by = "id_sample")
-nanosight_outliers_mean_w2 <- anti_join(nanosight_w2, nanosight_sem_outliers_mean_w2, by = "id_sample")
-nanosight_outliers_porcentagem_w1 <- anti_join(nanosight_w1, nanosight_sem_outliers_porcentagem_w1, by = "id_sample")
-nanosight_outliers_porcentagem_w2 <- anti_join(nanosight_w2, nanosight_sem_outliers_porcentagem_w2, by = "id_sample")
-nanosight_outliers_concentracao_w1 <- anti_join(nanosight_w1, nanosight_sem_outliers_concentracao_w1, by = "id_sample")
-nanosight_outliers_concentracao_w2 <- anti_join(nanosight_w2, nanosight_sem_outliers_concentracao_w2, by = "id_sample")
+nanosight_outliers <- anti_join(nanosight_plus_sampleinfo, nanosight_intersect, by = "id_sample")
 
 ##Amostras sem pares
 linhas_sem_pares <- !duplicated(nanosight_plus_sampleinfo$subjectid) & !duplicated(nanosight_plus_sampleinfo$subjectid, fromLast = TRUE)
@@ -153,16 +164,16 @@ nanosight_plus_sampleinfo_pares <- anti_join(nanosight_plus_sampleinfo, nanosigh
 #Contagem de indivíduos com diferentes transtornos:
 ##w1
 variaveis_w1 <- nanosight_w1 %>% 
-  select(dcany, dcmadep, dcanyanx, dcgena, dcanyhk, dcpsych, dcmania, dcptsd)
-variaveis_w1_combinacao <- as.data.frame(rowSums(variaveis == "T"))
+  select(dcany, dcmadep, dcanyanx, dcgena, dcanyhk, dcpsych, dcptsd)
+variaveis_w1_combinacao <- as.data.frame(rowSums(variaveis_w1 == "T"))
 combinacoes_w1_frequencias <- variaveis_w1 %>%
   group_by(across(everything())) %>%
   summarise(Frequencia = n(), .groups = "drop")
 ##w2
 variaveis_w2 <- nanosight_w2 %>% 
-  select(dcany, dcmadep, dcanyanx, dcgena, dcanyhk, dcpsych, dcmania, dcptsd)
-variaveis_w2_combinacao <- as.data.frame(rowSums(variaveis == "T"))
-combinacoes_w2_frequencias <- variaveis %>%
+  select(dcany, dcmadep, dcanyanx, dcgena, dcanyhk, dcpsych, dcptsd)
+variaveis_w2_combinacao <- as.data.frame(rowSums(variaveis_w2 == "T"))
+combinacoes_w2_frequencias <- variaveis_w2 %>%
   group_by(across(everything())) %>%
   summarise(Frequencia = n(), .groups = "drop")
 
