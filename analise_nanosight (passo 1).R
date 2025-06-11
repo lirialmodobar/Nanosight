@@ -158,7 +158,7 @@ nanosight_outliers <- anti_join(nanosight_plus_sampleinfo, nanosight_intersect, 
 ##Amostras sem pares
 linhas_sem_pares <- !duplicated(nanosight_plus_sampleinfo$subjectid) & !duplicated(nanosight_plus_sampleinfo$subjectid, fromLast = TRUE)
 nanosight_sem_pares <- nanosight_plus_sampleinfo[linhas_sem_pares, ] #perde 7
-##Amostras com pares sem outliers
+##Amostras com pares
 nanosight_plus_sampleinfo_pares <- anti_join(nanosight_plus_sampleinfo, nanosight_sem_pares, by = "id_sample")
 
 #Contagem de indivíduos com diferentes transtornos:
