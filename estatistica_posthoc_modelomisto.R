@@ -152,3 +152,4 @@ ggplot(nanosight_plus_sampleinfo, aes(x = Trajetoria, y = EV_pequenas_porcentage
   labs(title = "Small EV's percentage for Trajectory and Time", y = "Small EV's %", x = "Trajectory")
 #Salvar
 ggsave("percentage_trajectory_time.pdf", width = 8, height = 6)
+

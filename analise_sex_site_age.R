@@ -2,6 +2,7 @@
 shapiro_teste_tamanho <- shapiro.test(nanosight_intersect$tamanho_mean_average) #0.0006688885
 shapiro_teste_concentracao <- shapiro.test(nanosight_intersect$concentracao_real) #2.133966e-12
 shapiro_teste_porcentagem <- shapiro.test(nanosight_intersect$EV_pequenas_porcentagem) #8.308021e-14
+shapiro_teste_bage <- shapiro.test(nanosight_intersect$bage) #0.04943
 
 #Teste U de Mann-Whitney (ou teste de Wilcoxon-Mann-Whitney) para variaveis continuas em 2 grupos independentes sem distribuiçao normal
 wilcox.test(tamanho_mean_average ~ sex, data = nanosight_intersect) #p-value = 0.2395
@@ -10,6 +11,11 @@ wilcox.test(EV_pequenas_porcentagem ~ sex, data = nanosight_intersect) #p-value 
 wilcox.test(tamanho_mean_average ~ site, data = nanosight_intersect) #p-value = 0.9031
 wilcox.test(concentracao_real ~ site, data = nanosight_intersect) #p-value = 0.1241
 wilcox.test(EV_pequenas_porcentagem ~ site, data = nanosight_intersect) #p-value = 0.493
+
+#Teste de Spearman (para variaveis continuas com dados não normais)
+cor.test(nanosight_intersect$bage, nanosight_intersect$tamanho_mean_average, method = "spearman")
+cor.test(nanosight_intersect$bage, nanosight_intersect$concentracao_real, method = "spearman")
+cor.test(nanosight_intersect$bage, nanosight_intersect$EV_pequenas_porcentagem, method = "spearman")
 
 #Teste de Kruskal-Wallis para variaveis continuas e 3 ou mais grupos (idade) com distribuiçao fora da normalidade
 nanosight_intersect$bage_floor <- floor(nanosight_intersect$bage)
@@ -136,7 +142,6 @@ descr_site <- nanosight_intersect %>%
 
 # ======= Estatísticas por idade (bage_floor) =======
 nanosight_intersect$bage_floor <- floor(nanosight_intersect$bage)
-
 descr_idade <- nanosight_intersect %>%
   group_by(bage_floor) %>%
   summarise(
@@ -157,8 +162,8 @@ descr_idade <- nanosight_intersect %>%
 
 # Shapiro-Wilk (já conhecido)
 shapiro_results <- data.frame(
-  Variável = c("Tamanho médio", "Concentração", "EV pequenas (%)"),
-  W = c(
+  Variável = c("Size", "Concentration", "Small EV's percentage"),
+  Chi_square = c(
     shapiro.test(nanosight_intersect$tamanho_mean_average)$statistic,
     shapiro.test(nanosight_intersect$concentracao_real)$statistic,
     shapiro.test(nanosight_intersect$EV_pequenas_porcentagem)$statistic
@@ -169,12 +174,14 @@ shapiro_results <- data.frame(
     shapiro.test(nanosight_intersect$EV_pequenas_porcentagem)$p.value
   )
 )
+shapiro_results$p_value <- format(shapiro_results$p_value, scientific=FALSE)
+shapiro_results$Interpretation <- ifelse(shapiro_results$p_value > 0.05, "normal distribution", "not normal distribution")
+shapiro_results$p_value <- as.numeric(shapiro_results$p_value, scientific=TRUE)
 
 # Wilcoxon (sexo e site)
 wilcox_results <- data.frame(
-  Variável = rep(c("Tamanho médio", "Concentração", "EV pequenas (%)"), 2),
-  Agrupamento = rep(c("Sexo", "Site"), each = 3),
-  W = c(
+  Comparison = rep(c("Size x Sex", "Concentration x Sex", "Small EV's Percentage x Sex", "Size x Site", "Concentration x Site", "Small EV's Percentage x Site")),
+  chi_square = c(
     wilcox.test(tamanho_mean_average ~ sex, data = nanosight_intersect)$statistic,
     wilcox.test(concentracao_real ~ sex, data = nanosight_intersect)$statistic,
     wilcox.test(EV_pequenas_porcentagem ~ sex, data = nanosight_intersect)$statistic,
@@ -191,29 +198,38 @@ wilcox_results <- data.frame(
     wilcox.test(EV_pequenas_porcentagem ~ site, data = nanosight_intersect)$p.value
   )
 )
+wilcox_results$Interpretation <- case_when(
+  wilcox_results$p_value > +0.05 ~ "no statistical difference",
+  wilcox_results$p_value < +0.05 & wilcox_results$p_value == +0.05 ~ "presence of statistical difference"
+)
 
-# Kruskal-Wallis (idade)
-kruskal_results <- data.frame(
-  Variável = c("Tamanho médio", "Concentração", "EV pequenas (%)"),
-  Agrupamento = "Idade (floor)",
-  Chi_sq = c(
-    kruskal.test(tamanho_mean_average ~ bage_floor, data = nanosight_intersect)$statistic,
-    kruskal.test(concentracao_real ~ bage_floor, data = nanosight_intersect)$statistic,
-    kruskal.test(EV_pequenas_porcentagem ~ bage_floor, data = nanosight_intersect)$statistic
-  ),
+#Spearman (idade)
+spearman_results <- data.frame(
+  Comparison = c("Age x Size", "Age x Concentration", "Age x Small EV's Percentage"),
   p_value = c(
-    kruskal.test(tamanho_mean_average ~ bage_floor, data = nanosight_intersect)$p.value,
-    kruskal.test(concentracao_real ~ bage_floor, data = nanosight_intersect)$p.value,
-    kruskal.test(EV_pequenas_porcentagem ~ bage_floor, data = nanosight_intersect)$p.value
+    cor.test(nanosight_intersect$bage, nanosight_intersect$tamanho_mean_average, method = "spearman")$p.value,
+    cor.test(nanosight_intersect$bage, nanosight_intersect$concentracao_real, method = "spearman")$p.value,
+    cor.test(nanosight_intersect$bage, nanosight_intersect$EV_pequenas_porcentagem, method = "spearman")$p.value
+  ),
+  rho = c(
+    cor.test(nanosight_intersect$bage, nanosight_intersect$tamanho_mean_average, method = "spearman")$estimate,
+    cor.test(nanosight_intersect$bage, nanosight_intersect$concentracao_real, method = "spearman")$estimate,
+    cor.test(nanosight_intersect$bage, nanosight_intersect$EV_pequenas_porcentagem, method = "spearman")$estimate
   )
 )
+spearman_results$Interpretation <- case_when(
+  rho < -0.3 & rho == -0.3 ~ "negative correlation", 
+  rho > +0.3 & rho == +0.3 ~ "positive correlation",
+  rho > -0.3 & rho < +0.3 ~ "no correlation"
+  )
+
 
 # ======= Exportar tudo em Excel =======
 write_xlsx(
   list(
     "Normalidade_Shapiro" = shapiro_results,
     "Wilcoxon" = wilcox_results,
-    "Kruskal_Wallis" = kruskal_results,
+    "Spearman" = spearman_results,
     "Descritivas_por_Sexo" = descr_sex,
     "Descritivas_por_Site" = descr_site,
     "Descritivas_por_Idade" = descr_idade
