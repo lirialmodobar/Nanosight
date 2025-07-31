@@ -32,54 +32,70 @@ library(patchwork)
 nanosight_plus_sampleinfo$sex <- factor(nanosight_plus_sampleinfo$sex, 
                      levels = c(1, 2), 
                      labels = c("M", "F"))
-# Sexo
+# Gráficos por sexo
 g1 <- ggplot(nanosight_plus_sampleinfo, aes(x = sex, y = tamanho_mean_average, fill = sex)) +
-  geom_boxplot() +
-  labs(title = "Size vs Sex", x = "Sex", y = "Size") +
-  theme_minimal()
+  geom_boxplot(outlier.shape = NA, alpha = 0.7, width = 0.6) +
+  geom_jitter(aes(color = sex), width = 0.15, size = 2, alpha = 0.7) +
+  labs(title = "A) Size vs Sex", x = "Sex", y = "Size (nm)") +
+  theme_minimal(base_size = 15) +
+  theme(plot.title = element_text(face = "bold", size = 16, hjust = 0.5))
 g2 <- ggplot(nanosight_plus_sampleinfo, aes(x = sex, y = concentracao_real, fill = sex)) +
-  geom_boxplot() +
-  labs(title = "Concentration vs Sex", x = "Sex", y = "Concentration") +
-  theme_minimal()
+  geom_boxplot(outlier.shape = NA, alpha = 0.7, width = 0.6) +
+  geom_jitter(aes(color = sex), width = 0.15, size = 2, alpha = 0.7) +
+  labs(title = "B) Concentration vs Sex", x = "Sex", y = "Concentration (particles/mL)") +
+  theme_minimal(base_size = 15) +
+  theme(plot.title = element_text(face = "bold", size = 16, hjust = 0.5))
 g3 <- ggplot(nanosight_plus_sampleinfo, aes(x = sex, y = EV_pequenas_porcentagem, fill = sex)) +
-  geom_boxplot() +
-  labs(title = "Small EVs % vs Sex", x = "Sex", y = "%") +
-  theme_minimal()
-# Site
+  geom_boxplot(outlier.shape = NA, alpha = 0.7, width = 0.6) +
+  geom_jitter(aes(color = sex), width = 0.15, size = 2, alpha = 0.7) +
+  labs(title = "C) Small EVs % vs Sex", x = "Sex", y = "Percentage (%)") +
+  theme_minimal(base_size = 15) +
+  theme(plot.title = element_text(face = "bold", size = 16, hjust = 0.5))
+# Gráficos por site
 g4 <- ggplot(nanosight_plus_sampleinfo, aes(x = site, y = tamanho_mean_average, fill = site)) +
-  geom_boxplot() +
-  labs(title = "Size vs Site", x = "Site", y = "Size") +
-  theme_minimal()
+  geom_boxplot(outlier.shape = NA, alpha = 0.7, width = 0.6) +
+  geom_jitter(aes(color = site), width = 0.15, size = 2, alpha = 0.7) +
+  labs(title = "D) Size vs Site", x = "Site", y = "Size (nm)") +
+  theme_minimal(base_size = 15) +
+  theme(plot.title = element_text(face = "bold", size = 16, hjust = 0.5))
 g5 <- ggplot(nanosight_plus_sampleinfo, aes(x = site, y = concentracao_real, fill = site)) +
-  geom_boxplot() +
-  labs(title = "Concentration vs Site", x = "Site", y = "Concentration") +
-  theme_minimal()
+  geom_boxplot(outlier.shape = NA, alpha = 0.7, width = 0.6) +
+  geom_jitter(aes(color = site), width = 0.15, size = 2, alpha = 0.7) +
+  labs(title = "E) Concentration vs Site", x = "Site", y = "Concentration (particles/mL)") +
+  theme_minimal(base_size = 15) +
+  theme(plot.title = element_text(face = "bold", size = 16, hjust = 0.5))
 g6 <- ggplot(nanosight_plus_sampleinfo, aes(x = site, y = EV_pequenas_porcentagem, fill = site)) +
-  geom_boxplot() +
-  labs(title = "Small EVs % vs Site", x = "Site", y = "%") +
-  theme_minimal()
-# Idade
+  geom_boxplot(outlier.shape = NA, alpha = 0.7, width = 0.6) +
+  geom_jitter(aes(color = site), width = 0.15, size = 2, alpha = 0.7) +
+  labs(title = "F) Small EVs % vs Site", x = "Site", y = "Percentage (%)") +
+  theme_minimal(base_size = 15) +
+  theme(plot.title = element_text(face = "bold", size = 16, hjust = 0.5))
+# Gráficos por idade (com pontos e suavização LOESS)
 g7 <- ggplot(nanosight_plus_sampleinfo, aes(x = bage, y = tamanho_mean_average)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "loess") +
-  labs(title = "Size vs Age", x = "Age", y = "Size") +
-  theme_minimal()
+  geom_point(alpha = 0.6, size = 2) +
+  geom_smooth(method = "loess", color = "blue", se = FALSE) +
+  labs(title = "G) Size vs Age", x = "Age", y = "Size (nm)") +
+  theme_minimal(base_size = 15) +
+  theme(plot.title = element_text(face = "bold", size = 16, hjust = 0.5))
 g8 <- ggplot(nanosight_plus_sampleinfo, aes(x = bage, y = concentracao_real)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "loess") +
-  labs(title = "Concentration vs Age", x = "Age", y = "Concentration") +
-  theme_minimal()
+  geom_point(alpha = 0.6, size = 2) +
+  geom_smooth(method = "loess", color = "blue", se = FALSE) +
+  labs(title = "H) Concentration vs Age", x = "Age", y = "Concentration (particles/mL)") +
+  theme_minimal(base_size = 15) +
+  theme(plot.title = element_text(face = "bold", size = 16, hjust = 0.5))
 g9 <- ggplot(nanosight_plus_sampleinfo, aes(x = bage, y = EV_pequenas_porcentagem)) +
-  geom_point(alpha = 0.5) +
-  geom_smooth(method = "loess") +
-  labs(title = "Small EVs % vs Age", x = "Age", y = "%") +
-  theme_minimal()
-# Linha 1: sexo | Linha 2: site | Linha 3: idade
+  geom_point(alpha = 0.6, size = 2) +
+  geom_smooth(method = "loess", color = "blue", se = FALSE) +
+  labs(title = "I) Small EVs % vs Age", x = "Age", y = "Percentage (%)") +
+  theme_minimal(base_size = 15) +
+  theme(plot.title = element_text(face = "bold", size = 16, hjust = 0.5))
+# Compor o painel
 painel_completo <- (g1 | g2 | g3) / (g4 | g5 | g6) / (g7 | g8 | g9)
-# Exibir no RStudio
+# Visualizar
 painel_completo
-ggsave("painel_vesiculas.pdf", painel_completo, width = 14, height = 12)
-
+# Salvar o painel
+ggsave("painel_vesiculas_completo.pdf", painel_completo, width = 16, height = 14)
+ggsave("painel_vesiculas_completo.png", painel_completo, width = 16, height = 14, dpi = 300)
 
 ####Salvando tabelas editaveis
 # Carregue os pacotes
