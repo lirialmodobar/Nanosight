@@ -13,7 +13,12 @@ library(patchwork)
 ##Size
 # Modelo linear misto
 mod_lin_mist_size <- lmer(tamanho_mean_average ~ wave * Trajetoria + (1 | subjectid), data = nanosight_intersect)
-summary(mod_lin_mist_size)
+# Resumo dos efeitos fixos do modelo (coeficientes)
+summary_mod_size <- summary(mod_lin_mist_size)
+df_fixed_effects_size <- as.data.frame(coef(summary_mod_size))
+df_fixed_effects_size$Coefficient <- rownames(df_fixed_effects_size)
+# Reorganizar colunas (Coeficiente primeiro)
+df_fixed_effects_size <- df_fixed_effects_size[, c("Coefficient", setdiff(names(df_fixed_effects_size), "Coefficient"))]
 #Médias marginais por grupo em cada tempo:
 emmeans(mod_lin_mist_size, ~ Trajetoria | wave)
 #Médias marginais por tempo em cada grupo:
@@ -37,17 +42,24 @@ df_pairs_wave_by_group_size <- as.data.frame(pairs_wave_by_group_size)
 # 4. Escrever tudo em um arquivo Excel com múltiplas abas
 write_xlsx(
   list(
-    "EMMeans_Trajetoria_por_Wave" = df_emm_group_by_wave_size,
-    "EMMeans_Wave_por_Trajetoria" = df_emm_wave_by_group_size,
-    "Contrastes_Trajetoria_por_Wave" = df_pairs_group_by_wave_size,
-    "Contrastes_Wave_por_Trajetoria" = df_pairs_wave_by_group_size
+    "Fixed_effects(coefficients)" = df_fixed_effects_size,
+    "EMMeans_Trajectory_by_Wave" = df_emm_group_by_wave_size,
+    "EMMeans_Wave_by_Trajectory" = df_emm_wave_by_group_size,
+    "Contrasts_Trajectory_by_Wave" = df_pairs_group_by_wave_size,
+    "Contrasts_Wave_by_Trajectory" = df_pairs_wave_by_group_size
   ),
-  path = "resultados_emmeans_size.xlsx"
+  path = "results_emmeans_size.xlsx"
 )
 
 ##concentration
 mod_lin_mist_conc <- lmer(concentracao_real ~ wave * Trajetoria + (1 | subjectid), data = nanosight_intersect)
 summary(mod_lin_mist_conc)
+# Resumo dos efeitos fixos do modelo (coeficientes)
+summary_mod_conc <- summary(mod_lin_mist_conc)
+df_fixed_effects_conc <- as.data.frame(coef(summary_mod_conc))
+df_fixed_effects_conc$Coefficient <- rownames(df_fixed_effects_conc)
+# Reorganizar colunas (Coeficiente primeiro)
+df_fixed_effects_conc <- df_fixed_effects_conc[, c("Coefficient", setdiff(names(df_fixed_effects_conc), "Coefficient"))]
 #Médias marginais por grupo em cada tempo:
 emmeans(mod_lin_mist_conc, ~ Trajetoria | wave)
 #Médias marginais por tempo em cada grupo:
@@ -71,17 +83,24 @@ df_pairs_wave_by_group <- as.data.frame(pairs_wave_by_group)
 # 4. Escrever tudo em um arquivo Excel com múltiplas abas
 write_xlsx(
   list(
-    "EMMeans_Trajetoria_por_Wave" = df_emm_group_by_wave,
-    "EMMeans_Wave_por_Trajetoria" = df_emm_wave_by_group,
-    "Contrastes_Trajetoria_por_Wave" = df_pairs_group_by_wave,
-    "Contrastes_Wave_por_Trajetoria" = df_pairs_wave_by_group
+    "Fixed_effects(coefficients)" = df_fixed_effects_conc,
+    "EMMeans_Trajectory_by_Wave" = df_emm_group_by_wave,
+    "EMMeans_Wave_by_Trajectory" = df_emm_wave_by_group,
+    "Contrasts_Trajectory_by_Wave" = df_pairs_group_by_wave,
+    "Contrasts_Wave_by_Trajectory" = df_pairs_wave_by_group
   ),
-  path = "resultados_emmeans_concentracao.xlsx"
+  path = "results_emmeans_concentration.xlsx"
 )
 
 ##percentage
 mod_lin_mist_perc <- lmer(EV_pequenas_porcentagem ~ wave * Trajetoria + (1 | subjectid), data = nanosight_intersect)
 summary(mod_lin_mist_perc)
+# Resumo dos efeitos fixos do modelo (coeficientes)
+summary_mod_perc <- summary(mod_lin_mist_perc)
+df_fixed_effects_perc <- as.data.frame(coef(summary_mod_perc))
+df_fixed_effects_perc$Coefficient <- rownames(df_fixed_effects_perc)
+# Reorganizar colunas (Coeficiente primeiro)
+df_fixed_effects_perc <- df_fixed_effects_perc[, c("Coefficient", setdiff(names(df_fixed_effects_perc), "Coefficient"))]
 #Médias marginais por grupo em cada tempo:
 emmeans(mod_lin_mist_perc, ~ Trajetoria | wave)
 #Médias marginais por tempo em cada grupo:
@@ -105,12 +124,13 @@ df_pairs_wave_by_group_perc <- as.data.frame(pairs_wave_by_group_perc)
 # 4. Escrever tudo em um arquivo Excel com múltiplas abas
 write_xlsx(
   list(
-    "EMMeans_Trajetoria_por_Wave" = df_emm_group_by_wave_perc,
-    "EMMeans_Wave_por_Trajetoria" = df_emm_wave_by_group_perc,
-    "Contrastes_Trajetoria_por_Wave" = df_pairs_group_by_wave_perc,
-    "Contrastes_Wave_por_Trajetoria" = df_pairs_wave_by_group_perc
+    "Fixed_effects(coefficients)" = df_fixed_effects_perc,
+    "EMMeans_Trajectory_by_Wave" = df_emm_group_by_wave_perc,
+    "EMMeans_Wave_by_Trajectory" = df_emm_wave_by_group_perc,
+    "Contrasts_Trajectory_by_Wave" = df_pairs_group_by_wave_perc,
+    "Contrasts_Wave_by_Trajectory" = df_pairs_wave_by_group_perc
   ),
-  path = "resultados_emmeans_percentage.xlsx"
+  path = "results_emmeans_percentage.xlsx"
 )
 
 ###Graficos visuais modelos lineares mistos
